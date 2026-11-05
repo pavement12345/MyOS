@@ -7,8 +7,6 @@ KERNEL := $(BUILD)/kernel.elf
 ISO := $(BUILD)/MyOS.iso
 CC ?= gcc
 NASM ?= nasm
-GRUB_FILE ?= grub-file
-GRUB_MKRESCUE ?= grub-mkrescue
 QEMU ?= qemu-system-x86_64
 
 CFLAGS := -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding \
@@ -23,10 +21,12 @@ C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
 ASM_OBJECTS := $(patsubst %.asm,$(OBJ)/%.o,$(ASM_SOURCES))
 OBJECTS := $(ASM_OBJECTS) $(C_OBJECTS)
 
-.PHONY: help setup clean check kernel iso run debug
+.PHONY: all help setup clean check kernel iso run debug
+
+all: kernel
 
 help:
-	@echo "MyOS build targets: setup clean check kernel iso run debug"
+	@echo "MyOS: setup clean check kernel iso run debug"
 
 setup:
 	@bash scripts/setup.sh
@@ -40,6 +40,7 @@ $(OBJ)/%.o: %.asm
 	$(NASM) -f elf64 $< -o $@
 
 $(KERNEL): $(OBJECTS) linker.ld
+	@mkdir -p $(@D)
 	$(CC) $(LDFLAGS) -o $@ $(OBJECTS)
 
 kernel: $(KERNEL)
