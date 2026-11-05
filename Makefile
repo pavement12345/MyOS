@@ -1,56 +1,66 @@
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
 
+BUILD := build
+OBJ := $(BUILD)/obj
+KERNEL := $(BUILD)/kernel.elf
+ISO := $(BUILD)/MyOS.iso
+CC ?= gcc
+NASM ?= nasm
+GRUB_FILE ?= grub-file
+GRUB_MKRESCUE ?= grub-mkrescue
+QEMU ?= qemu-system-x86_64
+
+CFLAGS := -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding \
+          -fno-stack-protector -fno-pic -fno-pie -m64 -mno-red-zone \
+          -mno-mmx -mno-sse -mno-sse2 -mcmodel=small -Ikernel
+LDFLAGS := -nostdlib -static -no-pie -Wl,-T,linker.ld \
+           -Wl,--build-id=none -Wl,-z,max-page-size=0x1000
+
+C_SOURCES := kernel/main.c kernel/panic.c
+ASM_SOURCES := boot/boot.asm
+C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
+ASM_OBJECTS := $(patsubst %.asm,$(OBJ)/%.o,$(ASM_SOURCES))
+OBJECTS := $(ASM_OBJECTS) $(C_OBJECTS)
+
 .PHONY: help setup clean check kernel iso run debug
 
 help:
-	@echo "MyOS development targets:"
-	@echo "  make setup  Install host development dependencies"
-	@echo "  make check  Verify Phase 1 host tools"
-	@echo "  make clean  Remove generated build output"
-	@echo "  make kernel Build the kernel (available in a later phase)"
-	@echo "  make iso    Generate build/MyOS.iso (available in a later phase)"
-	@echo "  make run    Run MyOS in QEMU (available in a later phase)"
-	@echo "  make debug  Start a QEMU/GDB debugging session (available later)"
+	@echo "MyOS build targets: setup clean check kernel iso run debug"
 
 setup:
 	@bash scripts/setup.sh
 
-check:
-	@set -euo pipefail; \
-	missing=0; \
-	for tool in git make gcc ld nasm python3 grub-mkrescue xorriso qemu-system-x86_64 gdb; do \
-		if ! command -v "$$tool" >/dev/null 2>&1; then \
-			echo "Missing required tool: $$tool"; \
-			missing=1; \
-		else \
-			printf "Found %-24s %s\n" "$$tool" "$$(command -v "$$tool")"; \
-		fi; \
-	done; \
-	if [[ "$$missing" -ne 0 ]]; then \
-		echo "Run 'make setup' and then 'make check' again."; \
-		exit 1; \
-	fi; \
-	echo "Phase 1 host-tool check passed."; \
-	echo "The kernel cross-compiler and bootable ISO are not implemented yet."
+$(OBJ)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+
+$(OBJ)/%.o: %.asm
+	@mkdir -p $(@D)
+	$(NASM) -f elf64 $< -o $@
+
+$(KERNEL): $(OBJECTS) linker.ld
+	$(CC) $(LDFLAGS) -o $@ $(OBJECTS)
+
+kernel: $(KERNEL)
+	@file $(KERNEL)
+
+iso: $(ISO)
+
+$(ISO): $(KERNEL) boot/grub/grub.cfg tools/create_iso.sh
+	@bash tools/create_iso.sh
+
+check: $(KERNEL)
+	@bash tools/check_kernel.sh $(KERNEL)
+
+run: $(ISO)
+	$(QEMU) -cdrom $(ISO) -m 256M -serial stdio -no-reboot -no-shutdown
+
+debug: $(ISO)
+	@echo "QEMU GDB stub: localhost:1234; attach with: gdb $(KERNEL) -ex 'target remote :1234'"
+	$(QEMU) -cdrom $(ISO) -m 256M -serial stdio -no-reboot -no-shutdown -S -s
 
 clean:
-	@mkdir -p build
-	@rm -rf build/obj build/iso-root build/MyOS.iso build/kernel.elf
-	@echo "Removed generated MyOS build output."
+	rm -rf $(OBJ) $(BUILD)/iso-root $(KERNEL) $(ISO) $(BUILD)/qemu.log
 
-kernel:
-	@echo "Not implemented yet: kernel build is scheduled for Phase 2 and later." >&2
-	@exit 2
-
-iso:
-	@echo "Not implemented yet: bootable ISO generation follows the kernel build." >&2
-	@exit 2
-
-run:
-	@echo "Not implemented yet: QEMU boot testing follows ISO generation." >&2
-	@exit 2
-
-debug:
-	@echo "Not implemented yet: QEMU/GDB debugging follows the kernel build." >&2
-	@exit 2
+-include $(C_OBJECTS:.o=.d)
