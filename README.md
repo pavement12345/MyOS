@@ -4,52 +4,33 @@ MyOS is an independent x86_64 operating-system project. Its kernel is original f
 
 ## Status
 
-The repository currently implements an initial GRUB Multiboot2 boot path and a small kernel boot smoke test. This is a bootable development milestone, **not** a complete general-purpose operating system. There is no scheduler, memory allocator, interrupt subsystem, disk filesystem, user mode, shell, graphical desktop, or physical-hardware support yet.
+The repository is establishing a minimal GRUB Multiboot2 boot path. The current milestone is not a complete general-purpose OS: there is no scheduler, memory allocator, interrupt subsystem, disk filesystem, user mode, shell, graphical desktop, or physical-hardware support yet. Check GitHub Actions for actual build and QEMU smoke-test evidence.
 
 ## Architecture
 
-- GRUB loads the ELF64 kernel using Multiboot2.
-- The kernel's NASM entry switches from the bootloader's 32-bit protected mode to x86_64 long mode, establishes temporary identity-mapped paging and a stack, then calls freestanding C.
-- The initial kernel reports boot status over COM1 serial and VGA text memory. It halts rather than claiming unsupported services.
-- Future kernel components will expose explicit interfaces for drivers, MyFS/VFS, system calls, shell, and eventually desktop applications.
+- GRUB BIOS Multiboot2 loads the ELF64 kernel.
+- NASM bootstrap code transitions from 32-bit protected mode into x86_64 long mode and calls freestanding C.
+- The initial kernel reports boot status over COM1 and VGA text memory, then halts.
+- Future drivers, MyFS/VFS, syscalls, shell, and desktop are planned but not operational.
 
-See `docs/architecture.md`, `docs/kernel.md`, and `docs/roadmap.md` for implemented behavior and limitations.
+See `docs/architecture.md`, `docs/kernel.md`, and `docs/roadmap.md`.
 
-## Development environment
+## Develop and build
 
-On Ubuntu/Debian or in the provided Codespaces dev container:
+In Codespaces, create a Codespace from this repository. On Ubuntu/Debian, run:
 
 ```sh
 make setup
 make check
+make kernel
+make iso
+make run
 ```
 
-The current build uses the host GCC only after verifying that it targets x86_64, then links freestanding code as a static ELF kernel. It does not link host libc. Phase 2's build-system decision is documented; a dedicated `x86_64-elf` cross-toolchain can replace the validated host-target compiler when needed.
+The kernel output is `build/kernel.elf`; the ISO output is `build/MyOS.iso`. `make debug` starts QEMU with its GDB stub on localhost:1234. The build uses x86_64 host GCC in freestanding mode and does not link host libc; the setup check verifies GCC's target. A dedicated cross-compiler remains a future toolchain improvement.
 
-## Build and run
-
-```sh
-make kernel      # build/kernel.elf
-make iso         # build/MyOS.iso
-make check       # build and validate the Multiboot2 kernel
-make run         # boot the ISO in QEMU
-make debug       # start QEMU stopped with a GDB server on TCP :1234
-make clean
-```
-
-To attach GDB in another terminal after `make debug`, use:
-
-```sh
-gdb build/kernel.elf
-(gdb) target remote :1234
-```
-
-The ISO is a GRUB BIOS boot ISO. UEFI boot support is not implemented. QEMU boot testing is the target; no physical machine or broad device compatibility is claimed. The CI workflow builds and uploads `build/MyOS.iso` as an artifact; it does not publish releases.
-
-## Repository structure
-
-The source follows the planned directory layout. `linker.ld` is at the repository root because it is a build/linker configuration, and `.github/workflows/build-iso.yml` automates build and smoke-test validation.
+The ISO currently targets GRUB BIOS boot. UEFI support is not implemented. QEMU is the target environment; no physical hardware or broad device compatibility is claimed. CI uploads an ISO artifact only when build and configured smoke tests pass.
 
 ## Limitations
 
-At this milestone, MyOS only initializes enough CPU state to enter 64-bit C code, writes a startup message, validates the Multiboot2 handoff magic, and halts. Temporary page tables identity-map the first 1 GiB using 2 MiB pages. No interrupt handling, dynamic memory management, storage, filesystem, input, process model, syscalls, networking, or GUI is implemented. A serial boot smoke test is not evidence that these future features work.
+At this milestone, no interrupt handling, dynamic memory management, storage, filesystem, keyboard/mouse input, process model, system calls, networking, or GUI is implemented. The bootstrap's 1 GiB identity map is temporary. Do not treat scaffold directories or planned interfaces as implemented features.
