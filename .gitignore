@@ -1,0 +1,31 @@
+# Generated build output
+/build/*
+!/build/.gitkeep
+/iso/boot/*
+
+# Compiled objects and binaries
+*.o
+*.a
+*.so
+*.elf
+*.bin
+*.iso
+*.img
+*.map
+
+# Debug and crash output
+*.core
+core
+core.*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
