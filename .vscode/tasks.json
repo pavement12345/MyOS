@@ -1,0 +1,46 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "MyOS: Setup dependencies",
+      "type": "shell",
+      "command": "make setup",
+      "problemMatcher": []
+    },
+    {
+      "label": "MyOS: Build kernel",
+      "type": "shell",
+      "command": "make kernel",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "MyOS: Validate kernel",
+      "type": "shell",
+      "command": "make check",
+      "dependsOn": "MyOS: Build kernel",
+      "problemMatcher": []
+    },
+    {
+      "label": "MyOS: Build ISO",
+      "type": "shell",
+      "command": "make iso",
+      "dependsOn": "MyOS: Build kernel",
+      "problemMatcher": []
+    },
+    {
+      "label": "MyOS: Run in QEMU",
+      "type": "shell",
+      "command": "make run",
+      "dependsOn": "MyOS: Build ISO",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "MyOS: Clean",
+      "type": "shell",
+      "command": "make clean",
+      "problemMatcher": []
+    }
+  ]
+}
