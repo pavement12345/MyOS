@@ -1,59 +1,55 @@
 # MyOS
 
-MyOS is an independent operating-system project targeting x86_64. Its kernel will be written from original source in freestanding C and assembly. Linux is used only as a development host; MyOS is not a Linux distribution.
+MyOS is an independent x86_64 operating-system project. Its kernel is original freestanding C and assembly; Linux is only the development host, not the finished system's kernel.
 
 ## Status
 
-**Current phase: Phase 1 — development environment and repository setup.**
+The repository currently implements an initial GRUB Multiboot2 boot path and a small kernel boot smoke test. This is a bootable development milestone, **not** a complete general-purpose operating system. There is no scheduler, memory allocator, interrupt subsystem, disk filesystem, user mode, shell, graphical desktop, or physical-hardware support yet.
 
-The kernel, boot process, filesystem, shell, desktop, and bootable ISO have not been implemented yet. Build targets for these features will be enabled as their prerequisites are developed and tested.
+## Architecture
 
-## Planned architecture
+- GRUB loads the ELF64 kernel using Multiboot2.
+- The kernel's NASM entry switches from the bootloader's 32-bit protected mode to x86_64 long mode, establishes temporary identity-mapped paging and a stack, then calls freestanding C.
+- The initial kernel reports boot status over COM1 serial and VGA text memory. It halts rather than claiming unsupported services.
+- Future kernel components will expose explicit interfaces for drivers, MyFS/VFS, system calls, shell, and eventually desktop applications.
 
-- **Boot:** GRUB will initially load the kernel and pass boot information through a defined protocol.
-- **Kernel:** An independently written, initially monolithic kernel with modular CPU, interrupt, memory, scheduling, driver, filesystem, and syscall components.
-- **Hardware:** QEMU virtual hardware is the initial target. Physical hardware support will only be claimed after testing.
-- **Filesystem:** MyFS will use an original documented disk format, exposed through a VFS.
-- **User interfaces:** MyShell and, later, MyDesktop will depend on kernel services that must be implemented first.
-- **Build:** A validated freestanding x86_64 toolchain, Make, scripts, and GitHub Actions will produce and validate build artifacts.
-
-## Development requirements
-
-The setup script installs host tools including Make, GCC, GNU Binutils, NASM, GRUB utilities, xorriso, QEMU, GDB, Git, and Python 3.
-
-The host GCC is **not** assumed to be suitable for kernel compilation. A freestanding x86_64 cross-compiler is a Phase 2 task.
+See `docs/architecture.md`, `docs/kernel.md`, and `docs/roadmap.md` for implemented behavior and limitations.
 
 ## Development environment
 
-In GitHub Codespaces, create a Codespace from this repository. The dev container runs `scripts/setup.sh` after creation.
+On Ubuntu/Debian or in the provided Codespaces dev container:
 
-For an Ubuntu or Debian host with `sudo`, run:
-
-```bash
+```sh
 make setup
 make check
 ```
 
-## Current build commands
+The current build uses the host GCC only after verifying that it targets x86_64, then links freestanding code as a static ELF kernel. It does not link host libc. Phase 2's build-system decision is documented; a dedicated `x86_64-elf` cross-toolchain can replace the validated host-target compiler when needed.
 
-```bash
-make help
-make check
+## Build and run
+
+```sh
+make kernel      # build/kernel.elf
+make iso         # build/MyOS.iso
+make check       # build and validate the Multiboot2 kernel
+make run         # boot the ISO in QEMU
+make debug       # start QEMU stopped with a GDB server on TCP :1234
 make clean
 ```
 
-The `kernel`, `iso`, `run`, and `debug` targets are intentionally not implemented yet. They will be enabled as the project reaches those phases.
+To attach GDB in another terminal after `make debug`, use:
 
-## ISO and QEMU
+```sh
+gdb build/kernel.elf
+(gdb) target remote :1234
+```
 
-No ISO exists yet. Once the kernel and ISO generation are implemented, the intended output is `build/MyOS.iso`, and QEMU will be the initial boot-test environment. A successful build or boot will only be reported after it has actually been run and verified.
+The ISO is a GRUB BIOS boot ISO. UEFI boot support is not implemented. QEMU boot testing is the target; no physical machine or broad device compatibility is claimed. The CI workflow builds and uploads `build/MyOS.iso` as an artifact; it does not publish releases.
 
-## Documentation
+## Repository structure
 
-- `docs/architecture.md` — overall architecture and component boundaries
-- `docs/kernel.md` — kernel initialization and subsystem design
-- `docs/roadmap.md` — completed, in-progress, and planned work
+The source follows the planned directory layout. `linker.ld` is at the repository root because it is a build/linker configuration, and `.github/workflows/build-iso.yml` automates build and smoke-test validation.
 
 ## Limitations
 
-At this phase, MyOS has no kernel, bootloader configuration, drivers, filesystem, shell, graphical interface, or bootable ISO. Host-tool availability does not imply support for any hardware or OS feature.
+At this milestone, MyOS only initializes enough CPU state to enter 64-bit C code, writes a startup message, validates the Multiboot2 handoff magic, and halts. Temporary page tables identity-map the first 1 GiB using 2 MiB pages. No interrupt handling, dynamic memory management, storage, filesystem, input, process model, syscalls, networking, or GUI is implemented. A serial boot smoke test is not evidence that these future features work.
