@@ -1,0 +1,62 @@
+name: Build MyOS ISO
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential gcc binutils nasm grub-common grub-pc-bin \
+            xorriso qemu-system-x86 gdb python3 file mtools
+
+      - name: Validate tools
+        run: bash scripts/check.sh
+
+      - name: Build and validate kernel
+        run: |
+          make clean
+          make kernel
+          make check
+
+      - name: Create ISO
+        run: make iso
+
+      - name: QEMU serial boot smoke test
+        shell: bash
+        run: |
+          set +e
+          timeout 15s qemu-system-x86_64 \
+            -cdrom build/MyOS.iso -m 256M -display none -serial stdio \
+            -no-reboot -no-shutdown > build/qemu.log 2>&1
+          qemu_status=$?
+          set -e
+          cat build/qemu.log
+          if [[ $qemu_status -ne 0 && $qemu_status -ne 124 ]]; then
+            echo "QEMU exited unexpectedly with status $qemu_status" >&2
+            exit 1
+          fi
+          grep -q "MyOS: entered x86_64 kernel" build/qemu.log
+          grep -q "MyOS: Multiboot2 handoff validated" build/qemu.log
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyOS.iso
+          path: build/MyOS.iso
+          if-no-files-found: error
+          retention-days: 14
