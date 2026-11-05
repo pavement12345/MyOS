@@ -11,32 +11,20 @@ else
 fi
 
 export DEBIAN_FRONTEND=noninteractive
-
 "${SUDO[@]}" apt-get update
 "${SUDO[@]}" apt-get install -y --no-install-recommends \
-  build-essential \
-  bison \
-  flex \
-  gawk \
-  git \
-  gdb \
-  grub-common \
-  grub-pc-bin \
-  libgmp-dev \
-  libmpc-dev \
-  libmpfr-dev \
-  nasm \
-  python3 \
-  python3-pip \
-  qemu-system-x86 \
-  texinfo \
-  xorriso \
-  mtools \
-  file \
-  make \
-  curl \
-  ca-certificates
+  build-essential gcc binutils make nasm grub-common grub-pc-bin \
+  xorriso qemu-system-x86 gdb git python3 file mtools ca-certificates
 
-echo
-echo "MyOS host dependencies installed."
-echo "Note: the freestanding x86_64 cross-compiler is a Phase 2 task."
+for tool in gcc ld nasm grub-file grub-mkrescue xorriso qemu-system-x86_64 gdb python3; do
+  command -v "$tool" >/dev/null || { echo "Missing tool after installation: $tool" >&2; exit 1; }
+done
+
+target="$(gcc -dumpmachine)"
+case "$target" in
+  x86_64-*) echo "GCC target validated: $target" ;;
+  *) echo "Expected an x86_64 GCC target, found: $target" >&2; exit 1 ;;
+esac
+
+echo "MyOS development dependencies installed."
+echo "Kernel compilation uses freestanding flags and does not link host libc."
