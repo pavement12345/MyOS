@@ -8,6 +8,13 @@ mb2_header_start:
     dd 0
     dd mb2_header_end - mb2_header_start
     dd -(0xE85250D6 + (mb2_header_end - mb2_header_start))
+    dw 5
+    dw 0
+    dd 20
+    dd 800
+    dd 600
+    dd 32
+    align 8, db 0
     dw 0
     dw 0
     dd 8
@@ -25,23 +32,32 @@ _start:
     mov [boot_magic], eax
     mov [boot_info], ebx
 
-    ; Temporary identity map for the first 1 GiB using 2 MiB pages.
+    ; Temporary identity map for the first 4 GiB using 2 MiB pages.
     mov eax, pdpt_table
     or eax, 0x03
     mov [pml4_table], eax
-    mov eax, page_directory
+    xor ecx, ecx
+.map_pdpt:
+    mov eax, page_directories
+    mov edx, ecx
+    shl edx, 12
+    add eax, edx
     or eax, 0x03
-    mov [pdpt_table], eax
-    mov dword [pdpt_table + 4], 0
+    mov [pdpt_table + ecx * 8], eax
+    mov dword [pdpt_table + ecx * 8 + 4], 0
+    inc ecx
+    cmp ecx, 4
+    jne .map_pdpt
+
     xor ecx, ecx
 .map:
     mov eax, ecx
     shl eax, 21
     or eax, 0x83
-    mov [page_directory + ecx * 8], eax
-    mov dword [page_directory + ecx * 8 + 4], 0
+    mov [page_directories + ecx * 8], eax
+    mov dword [page_directories + ecx * 8 + 4], 0
     inc ecx
-    cmp ecx, 512
+    cmp ecx, 2048
     jne .map
 
     lgdt [gdt_pointer]
@@ -98,7 +114,7 @@ section .bss
 align 4096
 pml4_table: resq 512
 pdpt_table: resq 512
-page_directory: resq 512
+page_directories: resq (4 * 512)
 align 16
 stack_bottom: resb 16384
 stack_top:
