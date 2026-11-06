@@ -1,0 +1,4 @@
+# Keep host and container build output out of the Docker build context.
+build/
+.git/
+.gitignore
