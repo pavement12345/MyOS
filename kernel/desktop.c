@@ -1,5 +1,6 @@
 #include "desktop.h"
 #include "keyboard.h"
+#include "mouse.h"
 
 #define TITLE_CAPACITY 25U
 #define TEXT_SCALE 2U
@@ -53,6 +54,9 @@ static char title[TITLE_CAPACITY] = "MYOS DESKTOP";
 static char previous_title[TITLE_CAPACITY];
 static uint32_t active_theme;
 static bool editing_title;
+static uint32_t pointer_x;
+static uint32_t pointer_y;
+static uint8_t pointer_buttons;
 
 static uint32_t glyph_index(char character) {
     if (character >= 'A' && character <= 'Z') {
@@ -189,52 +193,121 @@ static void copy_title(char *destination, const char *source) {
     destination[index] = '\0';
 }
 
-_Noreturn void desktop_run(const framebuffer_t *framebuffer) {
+static void draw_cursor(const framebuffer_t *framebuffer) {
+    for (uint32_t row = 0U; row < 12U; ++row) {
+        uint32_t row_width = row / 2U + 1U;
+        framebuffer_fill_rect(framebuffer, pointer_x + row, pointer_y + row,
+                              row_width, 1U, 0x05070BU);
+        if (row_width > 2U) {
+            framebuffer_fill_rect(framebuffer, pointer_x + row + 1U,
+                                  pointer_y + row, row_width - 2U, 1U, 0xF5F7FAU);
+        }
+    }
+}
+
+static void begin_title_edit(void) {
+    copy_title(previous_title, title);
+    title[0] = '\0';
+    editing_title = true;
+}
+
+static bool mouse_click_action(const framebuffer_t *framebuffer, uint32_t x, uint32_t y) {
+    uint32_t card_x = 176U;
+    uint32_t card_width = framebuffer->width - card_x - 28U;
+    uint32_t swatch_y = framebuffer->height / 4U + 108U;
+    uint32_t title_y = (framebuffer->height * 2U) / 3U + 44U;
+
+    for (uint32_t i = 0U; i < (uint32_t)(sizeof(themes) / sizeof(themes[0])); ++i) {
+        uint32_t swatch_x = card_x + 22U + i * 58U;
+        if (x >= swatch_x && x < swatch_x + 36U &&
+            y >= swatch_y && y < swatch_y + 24U) {
+            active_theme = i;
+            return true;
+        }
+    }
+
+    if (!editing_title && x >= card_x + 18U &&
+        x < card_x + card_width - 18U &&
+        y >= title_y && y < title_y + 34U) {
+        begin_title_edit();
+        return true;
+    }
+    return false;
+}
+
+_Noreturn void desktop_run(const framebuffer_t *framebuffer, bool mouse_available) {
+    pointer_x = framebuffer->width / 2U;
+    pointer_y = framebuffer->height / 2U;
     draw_desktop(framebuffer);
+    if (mouse_available) {
+        draw_cursor(framebuffer);
+    }
 
     for (;;) {
+        bool redraw = false;
         uint8_t key;
-        if (!keyboard_poll(&key)) {
-            __asm__ volatile ("pause");
-            continue;
+        if (keyboard_poll(&key)) {
+            if (editing_title) {
+                if (key == KEYBOARD_KEY_ENTER) {
+                    editing_title = false;
+                } else if (key == KEYBOARD_KEY_ESCAPE) {
+                    copy_title(title, previous_title);
+                    editing_title = false;
+                } else if (key == KEYBOARD_KEY_BACKSPACE) {
+                    uint32_t length = 0U;
+                    while (length + 1U < TITLE_CAPACITY && title[length] != '\0') {
+                        ++length;
+                    }
+                    if (length != 0U) {
+                        title[length - 1U] = '\0';
+                    }
+                } else if (title_character(key)) {
+                    uint32_t length = 0U;
+                    while (length + 1U < TITLE_CAPACITY && title[length] != '\0') {
+                        ++length;
+                    }
+                    if (length + 1U < TITLE_CAPACITY) {
+                        if (key >= 'a' && key <= 'z') {
+                            key = (uint8_t)(key - 'a' + 'A');
+                        }
+                        title[length] = (char)key;
+                        title[length + 1U] = '\0';
+                    }
+                }
+            } else if (key == 't' || key == 'T') {
+                active_theme = (active_theme + 1U) %
+                               (uint32_t)(sizeof(themes) / sizeof(themes[0]));
+            } else if (key == 'e' || key == 'E') {
+                begin_title_edit();
+            }
+            redraw = true;
         }
 
-        if (editing_title) {
-            if (key == KEYBOARD_KEY_ENTER) {
-                editing_title = false;
-            } else if (key == KEYBOARD_KEY_ESCAPE) {
-                copy_title(title, previous_title);
-                editing_title = false;
-            } else if (key == KEYBOARD_KEY_BACKSPACE) {
-                uint32_t length = 0U;
-                while (length + 1U < TITLE_CAPACITY && title[length] != '\0') {
-                    ++length;
+        if (mouse_available) {
+            mouse_state_t mouse;
+            if (mouse_poll(&mouse)) {
+                bool moved = mouse.x != pointer_x || mouse.y != pointer_y;
+                bool left_pressed = (mouse.buttons & 0x01U) != 0U &&
+                                    (pointer_buttons & 0x01U) == 0U;
+                pointer_x = mouse.x;
+                pointer_y = mouse.y;
+                pointer_buttons = mouse.buttons;
+                if (moved) {
+                    redraw = true;
                 }
-                if (length != 0U) {
-                    title[length - 1U] = '\0';
-                }
-            } else if (title_character(key)) {
-                uint32_t length = 0U;
-                while (length + 1U < TITLE_CAPACITY && title[length] != '\0') {
-                    ++length;
-                }
-                if (length + 1U < TITLE_CAPACITY) {
-                    if (key >= 'a' && key <= 'z') {
-                        key = (uint8_t)(key - 'a' + 'A');
-                    }
-                    title[length] = (char)key;
-                    title[length + 1U] = '\0';
+                if (left_pressed && mouse_click_action(framebuffer, mouse.x, mouse.y)) {
+                    redraw = true;
                 }
             }
-        } else if (key == 't' || key == 'T') {
-            active_theme = (active_theme + 1U) %
-                           (uint32_t)(sizeof(themes) / sizeof(themes[0]));
-        } else if (key == 'e' || key == 'E') {
-            copy_title(previous_title, title);
-            title[0] = '\0';
-            editing_title = true;
         }
 
-        draw_desktop(framebuffer);
+        if (redraw) {
+            draw_desktop(framebuffer);
+            if (mouse_available) {
+                draw_cursor(framebuffer);
+            }
+        } else {
+            __asm__ volatile ("pause");
+        }
     }
 }
