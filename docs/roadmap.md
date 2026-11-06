@@ -4,10 +4,10 @@ This roadmap separates source code from integrated and verified behavior. A feat
 
 ## Current milestone
 
-- **Implemented boot path:** GRUB BIOS Multiboot2 entry, NASM transition to x86_64, freestanding C entry, early serial diagnostics, bounds-checked 32-bit RGB framebuffer setup, basic customizable desktop, polled PS/2 keyboard and mouse, and panic/halt path. Build and runtime status must be established by CI or local tests; this document does not assert a passing run.
+- **Implemented boot path:** GRUB BIOS Multiboot2 entry, NASM transition to x86_64, freestanding C entry, early serial diagnostics, bounds-checked framebuffer and memory-map setup, a physical 4 KiB frame allocator below 4 GiB, basic customizable desktop, polled PS/2 keyboard and mouse, and panic/halt path. Build and runtime status must be established by CI or local tests; this document does not assert a passing run.
 - **Present but not integrated:** polled COM1 driver and serial shell command/input source; generic static network-device interface and registry. The current Makefile/kernel entry do not wire these components into the booted system.
 - **Desktop prototype limits:** four volatile color themes, title editing, mouse pointer and clicks only; no saved preferences, windows, applications, or accelerated graphics. The interface requires a supported Multiboot2 framebuffer and PS/2-compatible input.
-- **Not implemented:** PCI discovery, physical/virtual memory managers, IDT/interrupt framework, NIC drivers, network protocols, storage/filesystems, processes/user mode, executable loader, and UEFI.
+- **Not implemented:** PCI discovery, virtual memory and heap, IDT/interrupt framework, NIC drivers, network protocols, storage/filesystems, processes/user mode, executable loader, and UEFI.
 
 ## Prioritized milestones
 
@@ -25,7 +25,7 @@ This roadmap separates source code from integrated and verified behavior. A feat
 
 ### 3. Add safe platform foundations
 
-- Parse and bounds-check Multiboot2 boot information and memory map.
+- Extend the physical frame allocator with virtual-memory mappings and heap allocation; add allocation exhaustion and malformed-map tests.
 - Add IDT and exception diagnostics; keep interrupts disabled until full setup is valid.
 - Add PCI enumeration and document configuration-space access.
 - Define memory allocation, MMIO mapping, DMA ownership, and teardown rules before bus-mastering drivers.
