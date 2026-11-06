@@ -8,6 +8,7 @@
 #include "heap.h"
 #include "pci.h"
 #include "e1000.h"
+#include "selftest.h"
 
 static inline void outb(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -129,6 +130,10 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
         panic("kernel heap self-test failed");
     }
     serial_write("MyOS: kernel heap allocation/coalescing self-test passed\n");
+    if (!filesystem_self_test()) {
+        panic("RAM filesystem API self-test failed");
+    }
+    serial_write("MyOS: RAM filesystem operations self-test passed\n");
     bool mouse_available = mouse_initialize(framebuffer.width, framebuffer.height);
     serial_write(mouse_available ? "MyOS: PS/2 mouse initialized\n" :
                                    "MyOS: PS/2 mouse unavailable; keyboard controls remain active\n");

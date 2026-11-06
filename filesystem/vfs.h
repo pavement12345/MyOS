@@ -8,12 +8,14 @@
 #define VFS_PATH_MAX 255U
 #define VFS_FILE_MAX_SIZE (16U * 1024U * 1024U)
 
-typedef enum {
+typedef enum
+{
     VFS_NODE_FILE,
     VFS_NODE_DIRECTORY
 } vfs_node_type_t;
 
-typedef enum {
+typedef enum
+{
     VFS_OK,
     VFS_END,
     VFS_INVALID,
@@ -23,10 +25,12 @@ typedef enum {
     VFS_IS_DIRECTORY,
     VFS_DIRECTORY_NOT_EMPTY,
     VFS_NO_MEMORY,
-    VFS_TOO_LARGE
+    VFS_TOO_LARGE,
+    VFS_INTERNAL_ERROR
 } vfs_status_t;
 
-typedef struct {
+typedef struct
+{
     char name[VFS_NAME_MAX + 1U];
     vfs_node_type_t type;
     uint64_t size;

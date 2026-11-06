@@ -62,6 +62,7 @@ jobs:
           grep -q "MyOS: Multiboot2 memory map validated; physical frame allocator ready" build/qemu.log
           grep -q "MyOS: virtual page map/unmap self-test passed" build/qemu.log
           grep -q "MyOS: kernel heap allocation/coalescing self-test passed" build/qemu.log
+          grep -q "MyOS: RAM filesystem operations self-test passed" build/qemu.log
           grep -q "MyOS: PS/2 mouse initialized" build/qemu.log
           grep -q "MyOS: desktop ready" build/qemu.log
 

@@ -9,7 +9,8 @@ This roadmap separates source code from integrated and verified behavior. A feat
 - **Desktop prototype limits:** four volatile color themes, title editing, mouse pointer and clicks only; no saved preferences, windows, applications, or accelerated graphics. The interface requires a supported Multiboot2 framebuffer and PS/2-compatible input.
 - **Implemented foundation only:** bounded PCI configuration-space enumeration over bus/device/function tuples; QEMU smoke test checks for the emulated e1000 function. No device is configured or driven by this enumerator.
 - **Implemented device initialization only:** the QEMU e1000 is mapped uncached, reset, and queried for MAC and link state. DMA, Ethernet frame I/O, network protocols, and other NIC models are not implemented.
-- **Not implemented:** hardware IRQ routing/timers, per-process virtual address spaces and protection, NIC packet I/O, network protocols, storage/filesystems, processes/user mode, executable loader, and UEFI.
+- **Implemented filesystem foundation:** path-based VFS API and volatile RAM filesystem with directory enumeration, metadata, create/read/write/copy/rename/remove operations; boot tests exercise operations and invalid/missing paths. No persistent storage or permissions.
+- **Not implemented:** hardware IRQ routing/timers, per-process virtual address spaces and protection, NIC packet I/O, network protocols, block storage/persistent filesystems, desktop file explorer, processes/user mode, executable loader, and UEFI.
 
 ## Prioritized milestones
 
@@ -43,10 +44,12 @@ This roadmap separates source code from integrated and verified behavior. A feat
 ### 5. Add OS services
 
 - Memory manager and heap, then timer/scheduler.
-- Block storage, filesystem, and VFS.
+- Add block storage and a persistent filesystem backend behind the VFS; define mount, error, permission, and timestamp semantics.
+- Build the file explorer as a separate desktop application using only the VFS API after the application/window/input interfaces exist.
 - User-mode process and syscall foundations.
 - Decide a native executable format before implementing a loader. Windows PE `.exe` compatibility requires substantial PE loading, user-mode, ABI, and library compatibility and is not a near-term promise.
 - Expand the framebuffer/keyboard/mouse desktop only after stable device and application interfaces; persistent settings require storage and a filesystem.
+- Add a buffered rendering API, event-based input, timer, and user-mode application lifecycle before exposing a native game SDK or adding game applications.
 - UEFI and broader hardware support as separately validated boot/platform targets.
 
 ## Release criteria

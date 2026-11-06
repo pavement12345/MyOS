@@ -15,14 +15,15 @@
 - Kernel 4 KiB virtual page mapping and a 64 MiB growable heap with aligned allocation, splitting, and coalescing.
 - Bounded PCI configuration-space enumeration; the QEMU boot smoke test verifies discovery of the emulated e1000 function. This is discovery only, not NIC or storage support.
 - Initial QEMU e1000 initialization reads the controller's MAC and link state after an uncached MMIO mapping and reset. It does not yet transmit or receive frames.
+- A path-based VFS API backed by a volatile RAM filesystem, with directory listing, name/type/size metadata, file and directory creation, file reads/writes, file copy, rename/move, and safe removal of files or empty directories. Boot tests exercise these operations and clean up their test data.
 - Build scripts for a kernel ELF and GRUB BIOS ISO.
 - Early COM1 shell and generic network-device registry source files are present on the development branch, but the current Makefile and kernel entry do not yet include them. They must not be treated as usable features.
 
-The desktop requires a Multiboot2-provided 32-bit RGB framebuffer (640x480 through 1920x1080) and PS/2-compatible input devices. Press **T** to cycle Midnight, Ocean, Forest, and Ember themes; press **E** to enter a title, type it, and press Enter to apply or Escape to cancel. With a mouse, click a theme swatch to select it or click the title field and type. These settings are held in memory and reset on reboot. This is an early full-screen UI, not a window manager: applications, networking, downloads, persistent storage/settings, user accounts, and graphics acceleration are not implemented.
+The desktop requires a Multiboot2-provided 32-bit RGB framebuffer (640x480 through 1920x1080) and PS/2-compatible input devices. Press **T** to cycle Midnight, Ocean, Forest, and Ember themes; press **E** to enter a title, type it, and press Enter to apply or Escape to cancel. With a mouse, click a theme swatch to select it or click the title field and type. These settings are held in memory and reset on reboot. This is an early full-screen UI, not a window manager: the RAM filesystem is volatile and not yet exposed through an explorer; applications, networking, downloads, persistent storage/settings, user accounts, and graphics acceleration are not implemented.
 
 The early heap uses a fixed 64 MiB virtual range and currently has no synchronization or user/kernel protection; maskable interrupts remain disabled. It is not a user-space allocator.
 
-Not yet implemented as a verified subsystem: hardware IRQ routing and timers, per-process address spaces and memory protection, e1000 DMA and packet I/O, network protocols, storage/filesystems, user mode, executable loading, UEFI, and Windows PE `.exe` compatibility. These memory primitives and PCI discovery alone are not sufficient to run applications or drivers.
+Not yet implemented as a verified subsystem: hardware IRQ routing and timers, per-process address spaces and memory protection, e1000 DMA and packet I/O, network protocols, block storage and persistent filesystems, file explorer, application lifecycle, user mode, executable loading, game runtime, UEFI, and Windows PE `.exe` compatibility. The RAM filesystem and memory primitives are kernel facilities only and are not sufficient to run applications or drivers.
 
 ## Architecture
 

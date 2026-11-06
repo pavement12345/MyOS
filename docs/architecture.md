@@ -12,9 +12,11 @@ PCI configuration mechanism #1 (I/O ports 0xCF8/0xCFC) enumerates bus/device/fun
 
 The desktop accepts 32-bit RGB framebuffers from 640x480 through 1920x1080 and provides four in-memory color themes plus an editable title. Keyboard and mouse input use polling and do not enable interrupts. If PS/2 mouse initialization fails, keyboard controls remain available. Settings are not persisted. The system still lacks per-process address spaces, hardware IRQ routing, timers, storage, applications, a window manager, and UEFI boot.
 
+The filesystem layer exposes a path-based VFS API in `filesystem/vfs.h`; its first backend is a RAM-only filesystem. It supports directory enumeration, metadata (name/type/size), file creation, bounded read/write, file copy, rename/move, and removal of files and empty directories. Boot self-tests exercise these operations against temporary test files and remove them before entering the desktop. Contents disappear on reboot: no block driver, persistent filesystem, mount interface, timestamps, permission checks, or file handles are present. Desktop applications must use the VFS API rather than kernel memory or device internals.
+
 ## Intended subsystem boundaries
 
-The planned kernel is initially monolithic, with separate CPU, interrupt, memory, scheduler, driver, filesystem, syscall, and shell components. Drivers will provide kernel-facing device interfaces; VFS will decouple filesystem clients from MyFS; user interfaces will use explicit kernel APIs. The frame allocator, basic page mapper, kernel heap, PCI configuration-space enumeration, framebuffer, and polled PS/2 input are initial low-level pieces only; these broader interfaces are not yet implemented.
+The planned kernel is initially monolithic, with separate CPU, interrupt, memory, scheduler, driver, filesystem, syscall, and shell components. Drivers will provide kernel-facing device interfaces; VFS will decouple filesystem clients from filesystem implementations; user interfaces will use explicit kernel APIs. The frame allocator, basic page mapper, kernel heap, PCI configuration-space enumeration, framebuffer, polled PS/2 input, and RAM-only VFS backend are initial low-level pieces only; these broader interfaces are not yet implemented.
 
 ## Build and validation
 
