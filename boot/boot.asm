@@ -112,6 +112,7 @@ gdt_pointer:
 
 section .bss
 align 4096
+global pml4_table
 pml4_table: resq 512
 pdpt_table: resq 512
 page_directories: resq (4 * 512)

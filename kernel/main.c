@@ -4,6 +4,8 @@
 #include "interrupts.h"
 #include "mouse.h"
 #include "physical.h"
+#include "virtual.h"
+#include "heap.h"
 
 static inline void outb(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -67,6 +69,39 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
         panic("physical frame allocator self-test failed");
     }
     serial_write("MyOS: Multiboot2 memory map validated; physical frame allocator ready\n");
+    uint64_t mapped_frame;
+    uint64_t unmapped_frame;
+    volatile uint64_t *test_mapping = (volatile uint64_t *)(uintptr_t)UINT64_C(0x1000000000);
+    if (!physical_frame_allocate(&mapped_frame) ||
+        !virtual_memory_map_page((uint64_t)(uintptr_t)test_mapping, mapped_frame)) {
+        panic("virtual page map self-test setup failed");
+    }
+    test_mapping[0] = UINT64_C(0x4D794F5350414745);
+    test_mapping[511] = UINT64_C(0x5445535450414745);
+    if (test_mapping[0] != UINT64_C(0x4D794F5350414745) ||
+        test_mapping[511] != UINT64_C(0x5445535450414745) ||
+        !virtual_memory_unmap_page((uint64_t)(uintptr_t)test_mapping, &unmapped_frame) ||
+        unmapped_frame != mapped_frame ||
+        !physical_frame_release(unmapped_frame)) {
+        panic("virtual page map/unmap self-test failed");
+    }
+    serial_write("MyOS: virtual page map/unmap self-test passed\n");
+    uint8_t *heap_small = (uint8_t *)kernel_heap_allocate(37U);
+    uint8_t *heap_large = (uint8_t *)kernel_heap_allocate(5000U);
+    if (heap_small == 0 || heap_large == 0) {
+        panic("kernel heap self-test allocation failed");
+    }
+    heap_small[0] = 0x5AU;
+    heap_small[36] = 0xA5U;
+    heap_large[0] = 0x3CU;
+    heap_large[4999] = 0xC3U;
+    if (heap_small[0] != 0x5AU || heap_small[36] != 0xA5U ||
+        heap_large[0] != 0x3CU || heap_large[4999] != 0xC3U ||
+        !kernel_heap_release(heap_small) || !kernel_heap_release(heap_large) ||
+        kernel_heap_release(heap_large)) {
+        panic("kernel heap self-test failed");
+    }
+    serial_write("MyOS: kernel heap allocation/coalescing self-test passed\n");
     bool mouse_available = mouse_initialize(framebuffer.width, framebuffer.height);
     serial_write(mouse_available ? "MyOS: PS/2 mouse initialized\n" :
                                    "MyOS: PS/2 mouse unavailable; keyboard controls remain active\n");
