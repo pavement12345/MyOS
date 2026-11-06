@@ -5,14 +5,15 @@ BUILD := build
 OBJ := $(BUILD)/obj
 KERNEL := $(BUILD)/kernel.elf
 ISO := $(BUILD)/MyOS.iso
-CC ?= gcc
-NASM ?= nasm
-QEMU ?= qemu-system-x86_64
+# Use the validated host GCC unless explicitly overridden on the make command line.
+CC = gcc
+NASM = nasm
+QEMU = qemu-system-x86_64
 
 CFLAGS := -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding \
           -fno-stack-protector -fno-pic -fno-pie -m64 -mno-red-zone \
           -mno-mmx -mno-sse -mno-sse2 -mcmodel=small -Ikernel
-LDFLAGS := -nostdlib -static -no-pie -Wl,-T,linker.ld \
+LDFLAGS := -m64 -nostdlib -static -no-pie -Wl,-T,linker.ld \
            -Wl,--build-id=none -Wl,-z,max-page-size=0x1000
 
 C_SOURCES := kernel/main.c kernel/panic.c
@@ -26,7 +27,7 @@ OBJECTS := $(ASM_OBJECTS) $(C_OBJECTS)
 all: kernel
 
 help:
-	@echo "MyOS: setup clean check kernel iso run debug"
+	@echo "MyOS build targets: setup clean check kernel iso run debug"
 
 setup:
 	@bash scripts/setup.sh
@@ -48,7 +49,8 @@ kernel: $(KERNEL)
 
 iso: $(ISO)
 
-$(ISO): $(KERNEL) boot/grub/grub.cfg tools/create_iso.sh
+$(ISO): $(KERNEL) boot/grub/grub.cfg tools/create_iso.sh tools/check_kernel.sh
+	@bash tools/check_kernel.sh $(KERNEL)
 	@bash tools/create_iso.sh
 
 check: $(KERNEL)
