@@ -6,6 +6,7 @@
 #include "physical.h"
 #include "virtual.h"
 #include "heap.h"
+#include "pci.h"
 
 static inline void outb(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -45,6 +46,13 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
         panic("IDT exception self-test failed");
     }
     serial_write("MyOS: IDT loaded; exception path self-test passed\n");
+    if (!pci_initialize()) {
+        panic("PCI enumeration found no devices or exceeded its bounded table");
+    }
+    serial_write("MyOS: PCI enumeration complete\n");
+    if (pci_find(0x8086U, 0x100EU) != 0) {
+        serial_write("MyOS: QEMU e1000 PCI function discovered\n");
+    }
 
     framebuffer_t framebuffer;
     if (!framebuffer_initialize(boot_info_address, &framebuffer)) {

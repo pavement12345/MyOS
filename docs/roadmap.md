@@ -7,7 +7,8 @@ This roadmap separates source code from integrated and verified behavior. A feat
 - **Implemented boot path:** GRUB BIOS Multiboot2 entry, NASM transition to x86_64, freestanding C entry, early serial diagnostics, exception-only IDT, bounds-checked framebuffer and memory-map setup, physical 4 KiB frame allocation below 4 GiB, 4 KiB virtual mapping, a 64 MiB kernel heap, basic customizable desktop, polled PS/2 keyboard and mouse, and panic/halt path. Build and runtime status must be established by CI or local tests; this document does not assert a passing run.
 - **Present but not integrated:** polled COM1 driver and serial shell command/input source; generic static network-device interface and registry. The current Makefile/kernel entry do not wire these components into the booted system.
 - **Desktop prototype limits:** four volatile color themes, title editing, mouse pointer and clicks only; no saved preferences, windows, applications, or accelerated graphics. The interface requires a supported Multiboot2 framebuffer and PS/2-compatible input.
-- **Not implemented:** PCI discovery, hardware IRQ routing/timers, per-process virtual address spaces and protection, NIC drivers, network protocols, storage/filesystems, processes/user mode, executable loader, and UEFI.
+- **Implemented foundation only:** bounded PCI configuration-space enumeration over bus/device/function tuples; QEMU smoke test checks for the emulated e1000 function. No device is configured or driven by this enumerator.
+- **Not implemented:** hardware IRQ routing/timers, per-process virtual address spaces and protection, NIC drivers, network protocols, storage/filesystems, processes/user mode, executable loader, and UEFI.
 
 ## Prioritized milestones
 
@@ -27,7 +28,7 @@ This roadmap separates source code from integrated and verified behavior. A feat
 
 - Add allocation exhaustion and malformed-map tests; establish per-process address spaces and protection before user mode.
 - Add hardware IRQ routing and timer support; keep maskable interrupts disabled until handlers and controllers are fully validated.
-- Add PCI enumeration and document configuration-space access.
+- Extend the bounded PCI enumeration tests to cover multi-function devices and table exhaustion; document configuration-space access.
 - Define memory allocation, MMIO mapping, DMA ownership, and teardown rules before bus-mastering drivers.
 
 ### 4. Build networking in tested increments

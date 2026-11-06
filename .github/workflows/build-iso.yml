@@ -42,6 +42,7 @@ jobs:
           set +e
           timeout 15s qemu-system-x86_64 \
             -cdrom build/MyOS.iso -m 256M -display none -serial stdio \
+            -netdev user,id=net0 -device e1000,netdev=net0 \
             -no-reboot -no-shutdown > build/qemu.log 2>&1
           qemu_status=$?
           set -e
@@ -53,6 +54,8 @@ jobs:
           grep -q "MyOS: entered x86_64 kernel" build/qemu.log
           grep -q "MyOS: Multiboot2 handoff validated" build/qemu.log
           grep -q "MyOS: IDT loaded; exception path self-test passed" build/qemu.log
+          grep -q "MyOS: PCI enumeration complete" build/qemu.log
+          grep -q "MyOS: QEMU e1000 PCI function discovered" build/qemu.log
           grep -q "MyOS: framebuffer initialized" build/qemu.log
           grep -q "MyOS: Multiboot2 memory map validated; physical frame allocator ready" build/qemu.log
           grep -q "MyOS: virtual page map/unmap self-test passed" build/qemu.log

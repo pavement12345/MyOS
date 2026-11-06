@@ -8,11 +8,13 @@ The physical allocator manages 4 KiB frames below 4 GiB, frees only usable range
 
 An IDT handles CPU exceptions, reports unexpected faults, and is smoke-tested by recovering from a breakpoint and a controlled page fault. Hardware interrupts remain disabled.
 
+PCI configuration mechanism #1 (I/O ports 0xCF8/0xCFC) enumerates bus/device/function tuples and records vendor/device IDs and basic class/header/interrupt-line fields in a fixed-size table. QEMU smoke testing verifies discovery of its emulated Intel e1000 function. Enumeration does not configure devices, enable bus mastering, route interrupts, or provide a NIC or storage driver.
+
 The desktop accepts 32-bit RGB framebuffers from 640x480 through 1920x1080 and provides four in-memory color themes plus an editable title. Keyboard and mouse input use polling and do not enable interrupts. If PS/2 mouse initialization fails, keyboard controls remain available. Settings are not persisted. The system still lacks per-process address spaces, hardware IRQ routing, timers, storage, applications, a window manager, and UEFI boot.
 
 ## Intended subsystem boundaries
 
-The planned kernel is initially monolithic, with separate CPU, interrupt, memory, scheduler, driver, filesystem, syscall, and shell components. Drivers will provide kernel-facing device interfaces; VFS will decouple filesystem clients from MyFS; user interfaces will use explicit kernel APIs. The frame allocator, basic page mapper, kernel heap, framebuffer, and polled PS/2 input are initial low-level pieces only; these broader interfaces are not yet implemented.
+The planned kernel is initially monolithic, with separate CPU, interrupt, memory, scheduler, driver, filesystem, syscall, and shell components. Drivers will provide kernel-facing device interfaces; VFS will decouple filesystem clients from MyFS; user interfaces will use explicit kernel APIs. The frame allocator, basic page mapper, kernel heap, PCI configuration-space enumeration, framebuffer, and polled PS/2 input are initial low-level pieces only; these broader interfaces are not yet implemented.
 
 ## Build and validation
 
