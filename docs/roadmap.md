@@ -4,16 +4,17 @@ This roadmap separates source code from integrated and verified behavior. A feat
 
 ## Current milestone
 
-- **Implemented boot path:** GRUB BIOS Multiboot2 entry, NASM transition to x86_64, freestanding C entry, early serial/VGA diagnostics, panic/halt path. Current build/boot status must be established by CI; this document does not assert a passing run.
+- **Implemented boot path:** GRUB BIOS Multiboot2 entry, NASM transition to x86_64, freestanding C entry, early serial diagnostics, bounds-checked 32-bit RGB framebuffer setup, basic customizable desktop, polled PS/2 keyboard, and panic/halt path. Build and runtime status must be established by CI or local tests; this document does not assert a passing run.
 - **Present but not integrated:** polled COM1 driver and serial shell command/input source; generic static network-device interface and registry. The current Makefile/kernel entry do not wire these components into the booted system.
-- **Not implemented:** PCI discovery, physical/virtual memory managers, IDT/interrupt framework, NIC drivers, network protocols, storage/filesystems, processes/user mode, executable loader, graphics, and UEFI.
+- **Desktop prototype limits:** four volatile color themes and title editing only; no mouse, saved preferences, windows, applications, or accelerated graphics. The interface requires a supported Multiboot2 framebuffer and PS/2 keyboard.
+- **Not implemented:** PCI discovery, physical/virtual memory managers, IDT/interrupt framework, NIC drivers, network protocols, storage/filesystems, processes/user mode, executable loader, and UEFI.
 
 ## Prioritized milestones
 
 ### 1. Establish a reproducible baseline
 
 - Run `make clean`, `make kernel`, `make check`, and `make iso` in CI.
-- Run a bounded QEMU boot smoke test and retain serial logs/artifacts.
+- Run a bounded QEMU boot smoke test that confirms framebuffer and desktop initialization, and retain serial logs/artifacts.
 - Fix build/boot regressions before adding dependent subsystems.
 
 ### 2. Integrate and test the serial shell
@@ -35,7 +36,7 @@ This roadmap separates source code from integrated and verified behavior. A feat
 - Implement one documented QEMU NIC only after PCI and memory/DMA foundations; test link and packet I/O in QEMU.
 - Add bounded Ethernet and protocol layers (begin with ARP and IPv4/ICMP) with explicit packet-buffer ownership.
 - Add text adapter-management commands only after devices exist. Add more NIC drivers one at a time with supported IDs and tests.
-- Physical NIC support, TCP/IP completeness, DHCP, and a graphical settings UI are not implied.
+- Physical NIC support and TCP/IP completeness are not implied.
 
 ### 5. Add OS services
 
@@ -43,7 +44,7 @@ This roadmap separates source code from integrated and verified behavior. A feat
 - Block storage, filesystem, and VFS.
 - User-mode process and syscall foundations.
 - Decide a native executable format before implementing a loader. Windows PE `.exe` compatibility requires substantial PE loading, user-mode, ABI, and library compatibility and is not a near-term promise.
-- Keyboard, graphics, and a desktop only after stable device and application interfaces.
+- Expand the framebuffer/keyboard desktop only after stable device and application interfaces; persistent settings require storage and a filesystem.
 - UEFI and broader hardware support as separately validated boot/platform targets.
 
 ## Release criteria

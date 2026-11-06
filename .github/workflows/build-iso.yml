@@ -52,6 +52,8 @@ jobs:
           fi
           grep -q "MyOS: entered x86_64 kernel" build/qemu.log
           grep -q "MyOS: Multiboot2 handoff validated" build/qemu.log
+          grep -q "MyOS: framebuffer initialized" build/qemu.log
+          grep -q "MyOS: desktop ready" build/qemu.log
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4

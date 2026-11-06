@@ -2,11 +2,13 @@
 
 ## Implemented
 
-The Multiboot2 entry starts in 32-bit protected mode, verifies the boot magic, creates a temporary identity map for the first 1 GiB, enables x86_64 long mode, loads a minimal GDT, creates a stack, and calls the C entry point. The kernel initializes COM1 and legacy VGA text output, validates the handoff magic, logs status, and halts.
+The Multiboot2 entry starts in 32-bit protected mode, verifies the boot magic, creates a temporary identity map for the first 4 GiB, enables x86_64 long mode, loads a minimal GDT, creates a stack, and calls the C entry point. The kernel initializes COM1, validates the handoff magic, bounds-checks Multiboot2 tags, and accepts only a 32-bit RGB framebuffer with supported dimensions and non-overlapping color channels. It draws a basic full-screen desktop and polls PS/2 scan codes for theme and title editing.
+
+The desktop has four color themes and an editable title; values are volatile and reset on reboot. It is a QEMU-oriented first UI, not a window manager or application environment.
 
 ## Not implemented
 
-The boot information pointer is not parsed. There is no IDT, exception/IRQ framework, timer, physical or virtual memory manager, heap, scheduler, process model, syscall entry, or user mode. Interrupts stay disabled. The bootstrap page tables are temporary and not a general virtual-memory implementation.
+There is no IDT, exception/IRQ framework, timer, physical or virtual memory manager, heap, scheduler, process model, syscall entry, or user mode. Interrupts stay disabled. The bootstrap page tables are temporary and not a general virtual-memory implementation. There is no mouse, persistent settings storage, graphics acceleration, or physical-hardware compatibility claim.
 
 ## Build assumptions
 

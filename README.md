@@ -2,16 +2,19 @@
 
 **MyOS is an independent x86_64 operating-system development project.** The kernel is written in freestanding C and assembly. Linux is a development host only; MyOS is not a Linux distribution.
 
-> **Status:** experimental, BIOS/GRUB Multiboot2 boot path. The current kernel demonstrates early boot and serial/VGA diagnostics. It is not a general-purpose OS, and the shell/network components described below are source-level work that is not yet integrated into the boot path or verified.
+> **Status:** experimental, BIOS/GRUB Multiboot2 boot path. The kernel boots a basic framebuffer desktop with polled keyboard controls and COM1 diagnostics. It is not a general-purpose OS; settings are runtime-only and the serial shell/network components described below are not integrated into the boot path.
 
 ## What exists today
 
 - GRUB BIOS Multiboot2 entry and NASM transition to 64-bit long mode.
-- Freestanding C kernel entry, serial diagnostics, VGA text output, and a panic/halt path.
+- Freestanding C kernel entry, serial diagnostics, a Multiboot2 RGB framebuffer desktop, and a panic/halt path.
+- A polled PS/2 keyboard interface for cycling four color themes and entering a desktop title.
 - Build scripts for a kernel ELF and GRUB BIOS ISO.
 - Early COM1 shell and generic network-device registry source files are present on the development branch, but the current Makefile and kernel entry do not yet include them. They must not be treated as usable features.
 
-Not yet implemented as a verified subsystem: interrupt/exception handling, memory management, PCI discovery, network hardware drivers or protocols, keyboard input, storage/filesystems, user mode, executable loading, graphics/desktop, or UEFI. Windows PE `.exe` compatibility is not provided.
+The desktop requires a Multiboot2-provided 32-bit RGB framebuffer (640x480 through 1920x1080) and a PS/2-compatible keyboard. Press **T** to cycle Midnight, Ocean, Forest, and Ember themes; press **E** to enter a title, type it, and press Enter to apply or Escape to cancel. These settings are held in memory and reset on reboot. This is an early full-screen UI, not a window manager: mouse input, persistent settings, applications, and graphics acceleration are not implemented.
+
+Not yet implemented as a verified subsystem: interrupt/exception handling, memory management, PCI discovery, network hardware drivers or protocols, storage/filesystems, user mode, executable loading, UEFI, and Windows PE `.exe` compatibility.
 
 ## Architecture
 
@@ -23,11 +26,11 @@ boot/boot.asm -- 32-bit entry, temporary identity map, long-mode transition
         |
         v
 kernel/main.c -- freestanding kernel entry and early diagnostics
-        |                          |
-        v                          v
-COM1 serial                 VGA text memory
+        |                     |                     |
+        v                     v                     v
+COM1 serial          framebuffer desktop     polled PS/2 keyboard
 
-Planned, not yet integrated: drivers/ -> memory/ -> filesystem/ -> shell/ -> user applications
+Planned, not yet integrated: memory/ -> filesystem/ -> shell/ -> user applications
 ```
 
 See [architecture](docs/architecture.md), [kernel notes](docs/kernel.md), and the [roadmap](docs/roadmap.md) for boundaries and limitations.
@@ -85,7 +88,7 @@ make check
 make iso
 ```
 
-For boot-path changes, run the ISO in QEMU and inspect serial output. The GitHub Actions workflow builds/validates the kernel and ISO and performs a bounded QEMU serial boot smoke test. It does not yet test interactive shell commands or network traffic. See [Contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md).
+For boot-path changes, run the ISO in QEMU and inspect serial output and the framebuffer. The GitHub Actions workflow builds/validates the kernel and ISO and performs a bounded QEMU boot smoke test that checks framebuffer and desktop initialization. It does not yet test interactive keyboard controls, shell commands, or network traffic. See [Contributing](CONTRIBUTING.md) and [security reporting](SECURITY.md).
 
 ## Contributing
 

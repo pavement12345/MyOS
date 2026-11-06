@@ -2,14 +2,14 @@
 
 ## Current boot milestone
 
-GRUB's Multiboot2 BIOS loader loads the ELF64 kernel and transfers control to `_start` in 32-bit protected mode. NASM bootstrap code checks the Multiboot2 magic, creates temporary identity-mapped page tables for the first 1 GiB using 2 MiB pages, enables PAE and long mode, loads a minimal GDT, sets a kernel stack, and calls the freestanding C entry. The C kernel initializes COM1, checks the handoff magic, writes a VGA text message, and halts.
+GRUB's Multiboot2 BIOS loader loads the ELF64 kernel, requests an 800x600x32 framebuffer, and transfers control to `_start` in 32-bit protected mode. NASM bootstrap code checks the Multiboot2 magic, creates temporary identity-mapped page tables for the first 4 GiB using 2 MiB pages, enables PAE and long mode, loads a minimal GDT, sets a kernel stack, and calls the freestanding C entry. The C kernel bounds-checks the Multiboot2 information and RGB framebuffer tag, initializes COM1, draws a full-screen desktop, and polls the PS/2 keyboard for theme and title changes.
 
-This is a minimal boot demonstration. It does not parse the Multiboot2 memory map or implement interrupts, memory allocation, storage, user mode, or desktop support. UEFI boot is not implemented.
+The desktop accepts 32-bit RGB framebuffers from 640x480 through 1920x1080 and provides four in-memory color themes plus an editable title. The keyboard path uses polling and does not enable interrupts. Settings are not persisted. This remains a minimal boot demonstration: it does not parse the Multiboot2 memory map, implement interrupts, memory allocation, storage, applications, a window manager, or UEFI boot.
 
 ## Intended subsystem boundaries
 
-The planned kernel is initially monolithic, with separate CPU, interrupt, memory, scheduler, driver, filesystem, syscall, and shell components. Drivers will provide kernel-facing device interfaces; VFS will decouple filesystem clients from MyFS; user interfaces will use explicit kernel APIs. These interfaces are not yet implemented.
+The planned kernel is initially monolithic, with separate CPU, interrupt, memory, scheduler, driver, filesystem, syscall, and shell components. Drivers will provide kernel-facing device interfaces; VFS will decouple filesystem clients from MyFS; user interfaces will use explicit kernel APIs. The framebuffer and polled keyboard are initial low-level pieces only; these broader interfaces are not yet implemented.
 
 ## Build and validation
 
-The Makefile builds freestanding ELF64 objects without linking host libc. GRUB utilities inspect the Multiboot2 header; xorriso creates the GRUB BIOS ISO. The Actions workflow runs a QEMU serial boot smoke test before uploading the ISO artifact. A passing test validates only the tested boot path in that environment, not UEFI, physical hardware, or unfinished features.
+The Makefile builds freestanding ELF64 objects without linking host libc. GRUB utilities inspect the Multiboot2 header; xorriso creates the GRUB BIOS ISO. The Actions workflow runs a bounded QEMU framebuffer/desktop boot smoke test before uploading the ISO artifact. A passing test validates only the tested boot path in that environment, not UEFI, physical hardware, interactive input, or unfinished features.

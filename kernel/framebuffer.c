@@ -34,9 +34,15 @@ static bool parse_framebuffer_tag(const uint8_t *tag, uint32_t size,
     if (width < 640U || width > 1920U || height < 480U || height > 1080U ||
         red_size != 8U || green_size != 8U || blue_size != 8U ||
         red_position > 24U || green_position > 24U || blue_position > 24U ||
-        (red_position == green_position) || (red_position == blue_position) ||
-        (green_position == blue_position) || pitch < width * 4U || (pitch & 3U) != 0U ||
-        (address & 3U) != 0U) {
+        pitch < width * 4U || (pitch & 3U) != 0U || (address & 3U) != 0U) {
+        return false;
+    }
+
+    uint32_t red_mask = 0xFFU << red_position;
+    uint32_t green_mask = 0xFFU << green_position;
+    uint32_t blue_mask = 0xFFU << blue_position;
+    if ((red_mask & green_mask) != 0U || (red_mask & blue_mask) != 0U ||
+        (green_mask & blue_mask) != 0U) {
         return false;
     }
 
