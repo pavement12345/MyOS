@@ -1,0 +1,55 @@
+name: Bug report
+ description: Report a reproducible problem in MyOS source, build, or QEMU boot.
+ title: "bug: "
+ labels: [bug]
+ body:
+  - type: markdown
+    attributes:
+      value: "Do not include secrets or data you do not own. For security issues, follow SECURITY.md instead of opening a public issue."
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Include exact commands and QEMU options.
+      placeholder: |
+        1. make clean
+        2. make iso
+        3. qemu-system-x86_64 ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and output
+      description: Paste relevant compiler, CI, or serial output. Redact sensitive information.
+      render: text
+  - type: input
+    id: revision
+    attributes:
+      label: MyOS revision
+      description: Branch and commit SHA.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Host environment
+      description: OS, architecture, and versions of GCC, NASM, GRUB, and QEMU.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I checked that this is not a security report.
+          required: true
+        - label: I have searched for a similar open or closed issue.
+          required: true
