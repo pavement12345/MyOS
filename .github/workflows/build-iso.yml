@@ -52,6 +52,7 @@ jobs:
           fi
           grep -q "MyOS: entered x86_64 kernel" build/qemu.log
           grep -q "MyOS: Multiboot2 handoff validated" build/qemu.log
+          grep -q "MyOS: IDT loaded; exception path self-test passed" build/qemu.log
           grep -q "MyOS: framebuffer initialized" build/qemu.log
           grep -q "MyOS: Multiboot2 memory map validated; physical frame allocator ready" build/qemu.log
           grep -q "MyOS: PS/2 mouse initialized" build/qemu.log
