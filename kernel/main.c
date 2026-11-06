@@ -2,6 +2,7 @@
 #include "desktop.h"
 #include "framebuffer.h"
 #include "mouse.h"
+#include "physical.h"
 
 static inline void outb(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -43,6 +44,24 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
         panic("no supported Multiboot2 RGB framebuffer (need 640x480 to 1920x1080, 32 bpp)");
     }
     serial_write("MyOS: framebuffer initialized\n");
+    uint32_t available_frames;
+    if (!physical_memory_initialize(boot_info_address, &framebuffer, &available_frames)) {
+        panic("invalid Multiboot2 memory map or no usable physical frames");
+    }
+    uint64_t first_frame;
+    uint64_t second_frame;
+    uint64_t released_frame;
+    if (!physical_frame_allocate(&first_frame) ||
+        !physical_frame_allocate(&second_frame) ||
+        first_frame == second_frame ||
+        !physical_frame_release(first_frame) ||
+        !physical_frame_allocate(&released_frame) ||
+        released_frame != first_frame ||
+        !physical_frame_release(released_frame) ||
+        !physical_frame_release(second_frame)) {
+        panic("physical frame allocator self-test failed");
+    }
+    serial_write("MyOS: Multiboot2 memory map validated; physical frame allocator ready\n");
     bool mouse_available = mouse_initialize(framebuffer.width, framebuffer.height);
     serial_write(mouse_available ? "MyOS: PS/2 mouse initialized\n" :
                                    "MyOS: PS/2 mouse unavailable; keyboard controls remain active\n");
