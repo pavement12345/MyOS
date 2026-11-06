@@ -36,6 +36,9 @@ typedef struct
     uint64_t size;
 } vfs_metadata_t;
 
+/* Paths are rooted at "/" (leading slash is optional); "." is accepted and
+ * ".." is rejected. Enumeration order is unspecified and entries are snapshots.
+ * The initial RAMFS backend is volatile and exposes no ownership or timestamps. */
 bool vfs_initialize(void);
 vfs_status_t vfs_stat(const char *path, vfs_metadata_t *metadata);
 vfs_status_t vfs_list(const char *path, uint32_t index,
