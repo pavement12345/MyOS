@@ -57,6 +57,7 @@ jobs:
           grep -q "MyOS: PCI enumeration complete" build/qemu.log
           grep -q "MyOS: QEMU e1000 PCI function discovered" build/qemu.log
           grep -q "MyOS: e1000 reset; MAC address read from controller" build/qemu.log
+          grep -q "MyOS: e1000 link is up" build/qemu.log
           grep -q "MyOS: framebuffer initialized" build/qemu.log
           grep -q "MyOS: Multiboot2 memory map validated; physical frame allocator ready" build/qemu.log
           grep -q "MyOS: virtual page map/unmap self-test passed" build/qemu.log

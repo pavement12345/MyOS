@@ -3,7 +3,7 @@
 
 **MyOS is an independent x86_64 operating-system development project.** The kernel is written in freestanding C and assembly. Linux is a development host only; MyOS is not a Linux distribution.
 
-> **Status:** experimental, BIOS/GRUB Multiboot2 boot path. The kernel boots a basic framebuffer desktop with polled keyboard and PS/2 mouse controls, plus COM1 diagnostics. It is not a general-purpose OS; settings are runtime-only and the serial shell/network components described below are not integrated into the boot path.
+> **Status:** experimental, BIOS/GRUB Multiboot2 boot path. The kernel boots a basic framebuffer desktop with polled keyboard and PS/2 mouse controls, plus COM1 diagnostics. It is not a general-purpose OS; settings are runtime-only, and the serial shell and generic network-device registry are not integrated into the boot path.
 
 ## What exists today
 
