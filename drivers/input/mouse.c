@@ -101,8 +101,8 @@ bool mouse_initialize(uint32_t screen_width, uint32_t screen_height) {
     if (!read_command_byte(&command_byte)) {
         return false;
     }
-    command_byte = (uint8_t)((command_byte | 0x20U) & (uint8_t)~0x02U);
-    if (!write_command_byte((uint8_t)(command_byte & (uint8_t)~0x20U)) ||
+    command_byte = (uint8_t)(command_byte & (uint8_t)~0x22U);
+    if (!write_command_byte(command_byte) ||
         !write_mouse(0xF6U) || !write_mouse(0xF4U)) {
         return false;
     }
