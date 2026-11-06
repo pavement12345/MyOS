@@ -3,6 +3,6 @@
 
 #include "framebuffer.h"
 
-_Noreturn void desktop_run(const framebuffer_t *framebuffer);
+_Noreturn void desktop_run(const framebuffer_t *framebuffer, bool mouse_available);
 
 #endif

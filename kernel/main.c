@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "desktop.h"
 #include "framebuffer.h"
+#include "mouse.h"
 
 static inline void outb(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -42,6 +43,9 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
         panic("no supported Multiboot2 RGB framebuffer (need 640x480 to 1920x1080, 32 bpp)");
     }
     serial_write("MyOS: framebuffer initialized\n");
-    serial_write("MyOS: desktop ready; press T to change theme or E to edit title\n");
-    desktop_run(&framebuffer);
+    bool mouse_available = mouse_initialize(framebuffer.width, framebuffer.height);
+    serial_write(mouse_available ? "MyOS: PS/2 mouse initialized\n" :
+                                   "MyOS: PS/2 mouse unavailable; keyboard controls remain active\n");
+    serial_write("MyOS: desktop ready; T/E keys, mouse theme and title controls\n");
+    desktop_run(&framebuffer, mouse_available);
 }

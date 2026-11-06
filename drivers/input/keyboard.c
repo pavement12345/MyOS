@@ -50,11 +50,11 @@ bool keyboard_poll(uint8_t *key) {
     }
 
     uint8_t status = inb(KEYBOARD_STATUS_PORT);
-    if ((status & 0x01U) == 0U) {
+    if ((status & 0x01U) == 0U || (status & 0x20U) != 0U) {
         return false;
     }
     uint8_t code = inb(KEYBOARD_DATA_PORT);
-    if ((status & 0x20U) != 0U || code == 0xE0U || code == 0xE1U) {
+    if (code == 0xE0U || code == 0xE1U) {
         return false;
     }
 
