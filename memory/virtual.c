@@ -3,6 +3,8 @@
 
 #define PAGE_PRESENT UINT64_C(0x001)
 #define PAGE_WRITABLE UINT64_C(0x002)
+#define PAGE_WRITE_THROUGH UINT64_C(0x008)
+#define PAGE_CACHE_DISABLE UINT64_C(0x010)
 #define PAGE_HUGE UINT64_C(0x080)
 #define PAGE_ADDRESS_MASK UINT64_C(0x000FFFFFFFFFF000)
 #define LOWER_CANONICAL_LIMIT UINT64_C(0x0000800000000000)
@@ -202,5 +204,65 @@ bool virtual_memory_unmap_page(uint64_t virtual_address, uint64_t *physical_addr
             }
         }
     }
+    return true;
+}
+
+bool virtual_memory_mark_mmio(uint64_t physical_address) {
+    if ((physical_address & (MYOS_VIRTUAL_PAGE_SIZE - 1U)) != 0U ||
+        physical_address >= UINT64_C(0x100000000)) {
+        return false;
+    }
+
+    uint32_t pml4_index = (uint32_t)((physical_address >> 39) & 0x1FFU);
+    uint32_t pdpt_index = (uint32_t)((physical_address >> 30) & 0x1FFU);
+    uint32_t pd_index = (uint32_t)((physical_address >> 21) & 0x1FFU);
+    uint32_t pt_index = (uint32_t)((physical_address >> 12) & 0x1FFU);
+    uint64_t pml4_entry = pml4_table[pml4_index];
+    if ((pml4_entry & PAGE_PRESENT) == 0U ||
+        (pml4_entry & PAGE_HUGE) != 0U) {
+        return false;
+    }
+
+    uint64_t *pdpt = (uint64_t *)(uintptr_t)(pml4_entry & PAGE_ADDRESS_MASK);
+    uint64_t pdpt_entry = pdpt[pdpt_index];
+    if ((pdpt_entry & PAGE_PRESENT) == 0U ||
+        (pdpt_entry & PAGE_HUGE) != 0U) {
+        return false;
+    }
+
+    uint64_t *page_directory =
+        (uint64_t *)(uintptr_t)(pdpt_entry & PAGE_ADDRESS_MASK);
+    uint64_t directory_entry = page_directory[pd_index];
+    if ((directory_entry & PAGE_PRESENT) == 0U) {
+        return false;
+    }
+
+    uint64_t *page_table;
+    if ((directory_entry & PAGE_HUGE) != 0U) {
+        uint64_t table_physical_address;
+        if (!physical_frame_allocate(&table_physical_address)) {
+            return false;
+        }
+        page_table = (uint64_t *)(uintptr_t)table_physical_address;
+        uint64_t base = physical_address & ~UINT64_C(0x1FFFFF);
+        for (uint32_t i = 0U; i < PAGE_TABLE_ENTRIES; ++i) {
+            page_table[i] = (base + (uint64_t)i * MYOS_VIRTUAL_PAGE_SIZE) |
+                            PAGE_PRESENT | PAGE_WRITABLE;
+        }
+        page_table[pt_index] |= PAGE_WRITE_THROUGH | PAGE_CACHE_DISABLE;
+        page_directory[pd_index] =
+            table_physical_address | PAGE_PRESENT | PAGE_WRITABLE;
+    } else {
+        page_table =
+            (uint64_t *)(uintptr_t)(directory_entry & PAGE_ADDRESS_MASK);
+        uint64_t page_entry = page_table[pt_index];
+        if ((page_entry & PAGE_PRESENT) == 0U ||
+            (page_entry & PAGE_ADDRESS_MASK) != physical_address) {
+            return false;
+        }
+        page_table[pt_index] |= PAGE_WRITE_THROUGH | PAGE_CACHE_DISABLE;
+    }
+
+    __asm__ volatile ("invlpg (%0)" : : "r"(physical_address) : "memory");
     return true;
 }

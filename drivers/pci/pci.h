@@ -23,5 +23,11 @@ bool pci_initialize(void);
 uint32_t pci_count(void);
 const pci_device_t *pci_get(uint32_t index);
 const pci_device_t *pci_find(uint16_t vendor_id, uint16_t device_id);
+bool pci_config_read16(const pci_device_t *device, uint8_t offset,
+                       uint16_t *value);
+bool pci_config_read32(const pci_device_t *device, uint8_t offset,
+                       uint32_t *value);
+bool pci_config_write16(const pci_device_t *device, uint8_t offset,
+                        uint16_t value);
 
 #endif

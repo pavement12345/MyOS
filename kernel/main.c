@@ -7,6 +7,7 @@
 #include "virtual.h"
 #include "heap.h"
 #include "pci.h"
+#include "e1000.h"
 
 static inline void outb(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -62,6 +63,15 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
     uint32_t available_frames;
     if (!physical_memory_initialize(boot_info_address, &framebuffer, &available_frames)) {
         panic("invalid Multiboot2 memory map or no usable physical frames");
+    }
+    const pci_device_t *network_device = pci_find(0x8086U, 0x100EU);
+    if (network_device != 0) {
+        if (!e1000_initialize(network_device)) {
+            panic("QEMU e1000 MMIO initialization failed");
+        }
+        serial_write("MyOS: e1000 reset; MAC address read from controller\n");
+        serial_write(e1000_link_is_up() ? "MyOS: e1000 link is up\n" :
+                                         "MyOS: e1000 link is down\n");
     }
     uint64_t first_frame;
     uint64_t second_frame;

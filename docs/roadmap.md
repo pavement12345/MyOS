@@ -5,10 +5,11 @@ This roadmap separates source code from integrated and verified behavior. A feat
 ## Current milestone
 
 - **Implemented boot path:** GRUB BIOS Multiboot2 entry, NASM transition to x86_64, freestanding C entry, early serial diagnostics, exception-only IDT, bounds-checked framebuffer and memory-map setup, physical 4 KiB frame allocation below 4 GiB, 4 KiB virtual mapping, a 64 MiB kernel heap, basic customizable desktop, polled PS/2 keyboard and mouse, and panic/halt path. Build and runtime status must be established by CI or local tests; this document does not assert a passing run.
-- **Present but not integrated:** polled COM1 driver and serial shell command/input source; generic static network-device interface and registry. The current Makefile/kernel entry do not wire these components into the booted system.
+- **Present but not integrated:** polled COM1 driver and serial shell command/input source; generic static network-device interface and registry. The current kernel entry does not wire these interfaces into the booted system.
 - **Desktop prototype limits:** four volatile color themes, title editing, mouse pointer and clicks only; no saved preferences, windows, applications, or accelerated graphics. The interface requires a supported Multiboot2 framebuffer and PS/2-compatible input.
 - **Implemented foundation only:** bounded PCI configuration-space enumeration over bus/device/function tuples; QEMU smoke test checks for the emulated e1000 function. No device is configured or driven by this enumerator.
-- **Not implemented:** hardware IRQ routing/timers, per-process virtual address spaces and protection, NIC drivers, network protocols, storage/filesystems, processes/user mode, executable loader, and UEFI.
+- **Implemented device initialization only:** the QEMU e1000 is mapped uncached, reset, and queried for MAC and link state. DMA, Ethernet frame I/O, network protocols, and other NIC models are not implemented.
+- **Not implemented:** hardware IRQ routing/timers, per-process virtual address spaces and protection, NIC packet I/O, network protocols, storage/filesystems, processes/user mode, executable loader, and UEFI.
 
 ## Prioritized milestones
 
@@ -29,12 +30,12 @@ This roadmap separates source code from integrated and verified behavior. A feat
 - Add allocation exhaustion and malformed-map tests; establish per-process address spaces and protection before user mode.
 - Add hardware IRQ routing and timer support; keep maskable interrupts disabled until handlers and controllers are fully validated.
 - Extend the bounded PCI enumeration tests to cover multi-function devices and table exhaustion; document configuration-space access.
-- Define memory allocation, MMIO mapping, DMA ownership, and teardown rules before bus-mastering drivers.
+- Define contiguous DMA allocation, ownership, synchronization, and teardown before enabling bus mastering.
 
 ### 4. Build networking in tested increments
 
 - Integrate/test the generic network-device registry and cover invalid operations, registration bounds, start/stop, and frame limits.
-- Implement one documented QEMU NIC only after PCI and memory/DMA foundations; test link and packet I/O in QEMU.
+- Complete e1000 support with bounded DMA allocation, ownership-safe TX/RX rings, and packet loopback tests before exposing it through the network-device registry.
 - Add bounded Ethernet and protocol layers (begin with ARP and IPv4/ICMP) with explicit packet-buffer ownership.
 - Add text adapter-management commands only after devices exist. Add more NIC drivers one at a time with supported IDs and tests.
 - Physical NIC support and TCP/IP completeness are not implied.

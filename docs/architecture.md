@@ -8,7 +8,7 @@ The physical allocator manages 4 KiB frames below 4 GiB, frees only usable range
 
 An IDT handles CPU exceptions, reports unexpected faults, and is smoke-tested by recovering from a breakpoint and a controlled page fault. Hardware interrupts remain disabled.
 
-PCI configuration mechanism #1 (I/O ports 0xCF8/0xCFC) enumerates bus/device/function tuples and records vendor/device IDs and basic class/header/interrupt-line fields in a fixed-size table. QEMU smoke testing verifies discovery of its emulated Intel e1000 function. Enumeration does not configure devices, enable bus mastering, route interrupts, or provide a NIC or storage driver.
+PCI configuration mechanism #1 (I/O ports 0xCF8/0xCFC) enumerates bus/device/function tuples and records vendor/device IDs and basic class/header/interrupt-line fields in a fixed-size table. QEMU smoke testing verifies discovery of its emulated Intel e1000 function. The e1000 driver supports only QEMU's 8086:100e device: it enables PCI memory-space access, marks the first 24 KiB of its MMIO BAR uncached, resets the controller, and reads its MAC and link state. It does not enable bus mastering, configure DMA rings, transmit or receive packets, or route interrupts.
 
 The desktop accepts 32-bit RGB framebuffers from 640x480 through 1920x1080 and provides four in-memory color themes plus an editable title. Keyboard and mouse input use polling and do not enable interrupts. If PS/2 mouse initialization fails, keyboard controls remain available. Settings are not persisted. The system still lacks per-process address spaces, hardware IRQ routing, timers, storage, applications, a window manager, and UEFI boot.
 

@@ -21,6 +21,16 @@ static inline uint32_t inl(uint16_t port) {
     return value;
 }
 
+static inline void outw(uint16_t port, uint16_t value) {
+    __asm__ volatile ("outw %0, %1" : : "a"(value), "Nd"(port));
+}
+
+static inline uint16_t inw(uint16_t port) {
+    uint16_t value;
+    __asm__ volatile ("inw %1, %0" : "=a"(value) : "Nd"(port));
+    return value;
+}
+
 static uint32_t config_address(uint8_t bus, uint8_t device, uint8_t function,
                                uint8_t offset) {
     return PCI_CONFIG_ENABLE |
@@ -113,4 +123,47 @@ const pci_device_t *pci_find(uint16_t vendor_id, uint16_t device_id) {
         }
     }
     return 0;
+}
+
+static bool is_enumerated_device(const pci_device_t *device) {
+    if (device == 0) {
+        return false;
+    }
+    for (uint32_t i = 0U; i < device_count; ++i) {
+        if (device == &devices[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool pci_config_read16(const pci_device_t *device, uint8_t offset,
+                       uint16_t *value) {
+    if (!is_enumerated_device(device) || value == 0 || (offset & 1U) != 0U) {
+        return false;
+    }
+    outl(PCI_CONFIG_ADDRESS,
+         config_address(device->bus, device->device, device->function, offset));
+    *value = inw((uint16_t)(PCI_CONFIG_DATA + (offset & 2U)));
+    return true;
+}
+
+bool pci_config_read32(const pci_device_t *device, uint8_t offset,
+                       uint32_t *value) {
+    if (!is_enumerated_device(device) || value == 0 || (offset & 3U) != 0U) {
+        return false;
+    }
+    *value = config_read(device->bus, device->device, device->function, offset);
+    return true;
+}
+
+bool pci_config_write16(const pci_device_t *device, uint8_t offset,
+                        uint16_t value) {
+    if (!is_enumerated_device(device) || (offset & 1U) != 0U) {
+        return false;
+    }
+    outl(PCI_CONFIG_ADDRESS,
+         config_address(device->bus, device->device, device->function, offset));
+    outw((uint16_t)(PCI_CONFIG_DATA + (offset & 2U)), value);
+    return true;
 }

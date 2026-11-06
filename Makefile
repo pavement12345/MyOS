@@ -13,13 +13,14 @@ QEMU = qemu-system-x86_64
 CFLAGS := -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding \
           -fno-stack-protector -fno-pic -fno-pie -m64 -mno-red-zone \
           -mno-mmx -mno-sse -mno-sse2 -mcmodel=small -Ikernel -Idrivers/input \
-          -Idrivers/pci -Imemory
+          -Idrivers/net -Idrivers/pci -Imemory
 LDFLAGS := -m64 -nostdlib -static -no-pie -Wl,-T,linker.ld \
            -Wl,--build-id=none -Wl,-z,max-page-size=0x1000
 
 C_SOURCES := kernel/main.c kernel/panic.c kernel/framebuffer.c kernel/desktop.c \
              kernel/interrupts.c drivers/input/keyboard.c drivers/input/mouse.c \
-             drivers/pci/pci.c memory/physical.c memory/virtual.c memory/heap.c
+             drivers/net/e1000.c drivers/pci/pci.c memory/physical.c \
+             memory/virtual.c memory/heap.c
 ASM_SOURCES := boot/boot.asm boot/interrupts.asm
 C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
 ASM_OBJECTS := $(patsubst %.asm,$(OBJ)/%.o,$(ASM_SOURCES))

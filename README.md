@@ -14,6 +14,7 @@
 - A bounds-checked Multiboot2 memory-map parser and a physical 4 KiB frame allocator for the identity-mapped first 4 GiB, with kernel, boot-information, and framebuffer memory reserved.
 - Kernel 4 KiB virtual page mapping and a 64 MiB growable heap with aligned allocation, splitting, and coalescing.
 - Bounded PCI configuration-space enumeration; the QEMU boot smoke test verifies discovery of the emulated e1000 function. This is discovery only, not NIC or storage support.
+- Initial QEMU e1000 initialization reads the controller's MAC and link state after an uncached MMIO mapping and reset. It does not yet transmit or receive frames.
 - Build scripts for a kernel ELF and GRUB BIOS ISO.
 - Early COM1 shell and generic network-device registry source files are present on the development branch, but the current Makefile and kernel entry do not yet include them. They must not be treated as usable features.
 
@@ -21,7 +22,7 @@ The desktop requires a Multiboot2-provided 32-bit RGB framebuffer (640x480 throu
 
 The early heap uses a fixed 64 MiB virtual range and currently has no synchronization or user/kernel protection; maskable interrupts remain disabled. It is not a user-space allocator.
 
-Not yet implemented as a verified subsystem: hardware IRQ routing and timers, per-process address spaces and memory protection, network hardware drivers or protocols, storage/filesystems, user mode, executable loading, UEFI, and Windows PE `.exe` compatibility. These memory primitives and PCI discovery alone are not sufficient to run applications or drivers.
+Not yet implemented as a verified subsystem: hardware IRQ routing and timers, per-process address spaces and memory protection, e1000 DMA and packet I/O, network protocols, storage/filesystems, user mode, executable loading, UEFI, and Windows PE `.exe` compatibility. These memory primitives and PCI discovery alone are not sufficient to run applications or drivers.
 
 ## Architecture
 
