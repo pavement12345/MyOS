@@ -95,7 +95,7 @@ bool pci_initialize(void) {
         }
     }
 
-    return device_count != 0U;
+    return true;
 }
 
 uint32_t pci_count(void) {

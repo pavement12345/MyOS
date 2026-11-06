@@ -47,7 +47,7 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
     }
     serial_write("MyOS: IDT loaded; exception path self-test passed\n");
     if (!pci_initialize()) {
-        panic("PCI enumeration found no devices or exceeded its bounded table");
+        panic("PCI enumeration exceeded its bounded device table");
     }
     serial_write("MyOS: PCI enumeration complete\n");
     if (pci_find(0x8086U, 0x100EU) != 0) {
