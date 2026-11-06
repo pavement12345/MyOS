@@ -21,7 +21,7 @@ This roadmap separates source code from integrated and verified behavior. A feat
 
 - Wire serial and shell sources into the build and kernel entry.
 - Exercise prompt, built-in commands, unknown command, backspace, line overflow, and halt in QEMU.
-- Keep the interface explicitly a polled kernel-context COM1 shell; keyboard input and user processes are separate future work.
+- Keep the shell explicitly a polled kernel-context COM1 interface; keyboard support for the shell and user processes remain separate work.
 
 ### 3. Add safe platform foundations
 
