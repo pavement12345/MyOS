@@ -1,4 +1,3 @@
-/* Multiboot2 x86 entry: switch GRUB's 32-bit protected mode into long mode. */
 ; Multiboot2 x86 entry: switch GRUB's 32-bit protected mode into long mode.
 BITS 32
 
