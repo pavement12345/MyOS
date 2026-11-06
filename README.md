@@ -12,12 +12,15 @@
 - An IDT with CPU exception reporting, tested by recovering from a breakpoint and a controlled page fault.
 - Polled PS/2 keyboard and mouse input for cycling four color themes, editing the desktop title, moving a pointer, and clicking theme/title controls.
 - A bounds-checked Multiboot2 memory-map parser and a physical 4 KiB frame allocator for the identity-mapped first 4 GiB, with kernel, boot-information, and framebuffer memory reserved.
+- Kernel 4 KiB virtual page mapping and a 64 MiB growable heap with aligned allocation, splitting, and coalescing.
 - Build scripts for a kernel ELF and GRUB BIOS ISO.
 - Early COM1 shell and generic network-device registry source files are present on the development branch, but the current Makefile and kernel entry do not yet include them. They must not be treated as usable features.
 
 The desktop requires a Multiboot2-provided 32-bit RGB framebuffer (640x480 through 1920x1080) and PS/2-compatible input devices. Press **T** to cycle Midnight, Ocean, Forest, and Ember themes; press **E** to enter a title, type it, and press Enter to apply or Escape to cancel. With a mouse, click a theme swatch to select it or click the title field and type. These settings are held in memory and reset on reboot. This is an early full-screen UI, not a window manager: applications, networking, downloads, persistent storage/settings, user accounts, and graphics acceleration are not implemented.
 
-Not yet implemented as a verified subsystem: hardware IRQ routing and timers, virtual memory and heap allocation, PCI discovery, network hardware drivers or protocols, storage/filesystems, user mode, executable loading, UEFI, and Windows PE `.exe` compatibility. The frame allocator and exception IDT alone are not sufficient to run applications or drivers.
+The early heap uses a fixed 64 MiB virtual range and currently has no synchronization or user/kernel protection; maskable interrupts remain disabled. It is not a user-space allocator.
+
+Not yet implemented as a verified subsystem: hardware IRQ routing and timers, per-process address spaces and memory protection, PCI discovery, network hardware drivers or protocols, storage/filesystems, user mode, executable loading, UEFI, and Windows PE `.exe` compatibility. These memory primitives alone are not sufficient to run applications or drivers.
 
 ## Architecture
 

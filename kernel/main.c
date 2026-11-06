@@ -76,6 +76,11 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
         !virtual_memory_map_page((uint64_t)(uintptr_t)test_mapping, mapped_frame)) {
         panic("virtual page map self-test setup failed");
     }
+    if (virtual_memory_map_page((uint64_t)(uintptr_t)test_mapping, mapped_frame) ||
+        virtual_memory_unmap_page((uint64_t)(uintptr_t)test_mapping + 1U,
+                                  &unmapped_frame)) {
+        panic("virtual page map accepted a duplicate or unaligned operation");
+    }
     test_mapping[0] = UINT64_C(0x4D794F5350414745);
     test_mapping[511] = UINT64_C(0x5445535450414745);
     if (test_mapping[0] != UINT64_C(0x4D794F5350414745) ||
@@ -86,6 +91,10 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
         panic("virtual page map/unmap self-test failed");
     }
     serial_write("MyOS: virtual page map/unmap self-test passed\n");
+    if (kernel_heap_allocate(0U) != 0 ||
+        kernel_heap_allocate(SIZE_MAX) != 0) {
+        panic("kernel heap accepted an invalid allocation size");
+    }
     uint8_t *heap_small = (uint8_t *)kernel_heap_allocate(37U);
     uint8_t *heap_large = (uint8_t *)kernel_heap_allocate(5000U);
     if (heap_small == 0 || heap_large == 0) {

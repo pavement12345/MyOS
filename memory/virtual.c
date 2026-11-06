@@ -30,26 +30,6 @@ static bool allocate_table(uint64_t **table) {
     return true;
 }
 
-static bool ensure_child(uint64_t *parent_entry, uint64_t **child) {
-    if ((*parent_entry & PAGE_PRESENT) != 0U) {
-        if ((*parent_entry & PAGE_HUGE) != 0U) {
-            return false;
-        }
-        *child = (uint64_t *)(uintptr_t)(*parent_entry & PAGE_ADDRESS_MASK);
-        *parent_entry |= PAGE_WRITABLE;
-        return true;
-    }
-
-    uint64_t *new_table;
-    if (!allocate_table(&new_table)) {
-        return false;
-    }
-    uint64_t address = (uint64_t)(uintptr_t)new_table;
-    *parent_entry = address | PAGE_PRESENT | PAGE_WRITABLE;
-    *child = new_table;
-    return true;
-}
-
 static bool table_is_empty(const uint64_t *table) {
     for (uint32_t i = 0U; i < PAGE_TABLE_ENTRIES; ++i) {
         if ((table[i] & PAGE_PRESENT) != 0U) {
@@ -71,12 +51,91 @@ bool virtual_memory_map_page(uint64_t virtual_address, uint64_t physical_address
     uint64_t *pdpt;
     uint64_t *page_directory;
     uint64_t *page_table;
+    bool new_pdpt = false;
+    bool new_page_directory = false;
+    bool new_page_table = false;
+    uint64_t pml4_entry = pml4_table[pml4_index];
 
-    if (!ensure_child(&pml4_table[pml4_index], &pdpt) ||
-        !ensure_child(&pdpt[pdpt_index], &page_directory) ||
-        !ensure_child(&page_directory[pd_index], &page_table) ||
-        (page_table[pt_index] & PAGE_PRESENT) != 0U) {
+    if ((pml4_entry & PAGE_PRESENT) != 0U) {
+        pdpt = (uint64_t *)(uintptr_t)(pml4_entry & PAGE_ADDRESS_MASK);
+    } else if (allocate_table(&pdpt)) {
+        new_pdpt = true;
+    } else {
         return false;
+    }
+
+    uint64_t pdpt_entry = pdpt[pdpt_index];
+    if ((pdpt_entry & PAGE_PRESENT) != 0U) {
+        if ((pdpt_entry & PAGE_HUGE) != 0U) {
+            if (new_pdpt) {
+                (void)physical_frame_release((uint64_t)(uintptr_t)pdpt);
+            }
+            return false;
+        }
+        page_directory = (uint64_t *)(uintptr_t)(pdpt_entry & PAGE_ADDRESS_MASK);
+    } else if (allocate_table(&page_directory)) {
+        new_page_directory = true;
+    } else {
+        if (new_pdpt) {
+            (void)physical_frame_release((uint64_t)(uintptr_t)pdpt);
+        }
+        return false;
+    }
+
+    uint64_t directory_entry = page_directory[pd_index];
+    if ((directory_entry & PAGE_PRESENT) != 0U) {
+        if ((directory_entry & PAGE_HUGE) != 0U) {
+            if (new_page_directory) {
+                (void)physical_frame_release((uint64_t)(uintptr_t)page_directory);
+            }
+            if (new_pdpt) {
+                (void)physical_frame_release((uint64_t)(uintptr_t)pdpt);
+            }
+            return false;
+        }
+        page_table = (uint64_t *)(uintptr_t)(directory_entry & PAGE_ADDRESS_MASK);
+    } else if (allocate_table(&page_table)) {
+        new_page_table = true;
+    } else {
+        if (new_page_directory) {
+            (void)physical_frame_release((uint64_t)(uintptr_t)page_directory);
+        }
+        if (new_pdpt) {
+            (void)physical_frame_release((uint64_t)(uintptr_t)pdpt);
+        }
+        return false;
+    }
+
+    if ((page_table[pt_index] & PAGE_PRESENT) != 0U) {
+        if (new_page_table) {
+            (void)physical_frame_release((uint64_t)(uintptr_t)page_table);
+        }
+        if (new_page_directory) {
+            (void)physical_frame_release((uint64_t)(uintptr_t)page_directory);
+        }
+        if (new_pdpt) {
+            (void)physical_frame_release((uint64_t)(uintptr_t)pdpt);
+        }
+        return false;
+    }
+
+    if (new_pdpt) {
+        pml4_table[pml4_index] = (uint64_t)(uintptr_t)pdpt |
+                                 PAGE_PRESENT | PAGE_WRITABLE;
+    } else {
+        pml4_table[pml4_index] |= PAGE_WRITABLE;
+    }
+    if (new_page_directory) {
+        pdpt[pdpt_index] = (uint64_t)(uintptr_t)page_directory |
+                           PAGE_PRESENT | PAGE_WRITABLE;
+    } else {
+        pdpt[pdpt_index] |= PAGE_WRITABLE;
+    }
+    if (new_page_table) {
+        page_directory[pd_index] = (uint64_t)(uintptr_t)page_table |
+                                   PAGE_PRESENT | PAGE_WRITABLE;
+    } else {
+        page_directory[pd_index] |= PAGE_WRITABLE;
     }
 
     page_table[pt_index] = physical_address | PAGE_PRESENT | PAGE_WRITABLE;
