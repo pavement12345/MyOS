@@ -1,18 +1,19 @@
+![Project Banner](assets/banner.png)
 # MyOS
 
 **MyOS is an independent x86_64 operating-system development project.** The kernel is written in freestanding C and assembly. Linux is a development host only; MyOS is not a Linux distribution.
 
-> **Status:** experimental, BIOS/GRUB Multiboot2 boot path. The kernel boots a basic framebuffer desktop with polled keyboard controls and COM1 diagnostics. It is not a general-purpose OS; settings are runtime-only and the serial shell/network components described below are not integrated into the boot path.
+> **Status:** experimental, BIOS/GRUB Multiboot2 boot path. The kernel boots a basic framebuffer desktop with polled keyboard and PS/2 mouse controls, plus COM1 diagnostics. It is not a general-purpose OS; settings are runtime-only and the serial shell/network components described below are not integrated into the boot path.
 
 ## What exists today
 
 - GRUB BIOS Multiboot2 entry and NASM transition to 64-bit long mode.
 - Freestanding C kernel entry, serial diagnostics, a Multiboot2 RGB framebuffer desktop, and a panic/halt path.
-- A polled PS/2 keyboard interface for cycling four color themes and entering a desktop title.
+- Polled PS/2 keyboard and mouse input for cycling four color themes, editing the desktop title, moving a pointer, and clicking theme/title controls.
 - Build scripts for a kernel ELF and GRUB BIOS ISO.
 - Early COM1 shell and generic network-device registry source files are present on the development branch, but the current Makefile and kernel entry do not yet include them. They must not be treated as usable features.
 
-The desktop requires a Multiboot2-provided 32-bit RGB framebuffer (640x480 through 1920x1080) and a PS/2-compatible keyboard. Press **T** to cycle Midnight, Ocean, Forest, and Ember themes; press **E** to enter a title, type it, and press Enter to apply or Escape to cancel. These settings are held in memory and reset on reboot. This is an early full-screen UI, not a window manager: mouse input, persistent settings, applications, and graphics acceleration are not implemented.
+The desktop requires a Multiboot2-provided 32-bit RGB framebuffer (640x480 through 1920x1080) and PS/2-compatible input devices. Press **T** to cycle Midnight, Ocean, Forest, and Ember themes; press **E** to enter a title, type it, and press Enter to apply or Escape to cancel. With a mouse, click a theme swatch to select it or click the title field and type. These settings are held in memory and reset on reboot. This is an early full-screen UI, not a window manager: applications, networking, downloads, persistent storage/settings, user accounts, and graphics acceleration are not implemented.
 
 Not yet implemented as a verified subsystem: interrupt/exception handling, memory management, PCI discovery, network hardware drivers or protocols, storage/filesystems, user mode, executable loading, UEFI, and Windows PE `.exe` compatibility.
 

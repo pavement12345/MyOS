@@ -4,9 +4,9 @@ This roadmap separates source code from integrated and verified behavior. A feat
 
 ## Current milestone
 
-- **Implemented boot path:** GRUB BIOS Multiboot2 entry, NASM transition to x86_64, freestanding C entry, early serial diagnostics, bounds-checked 32-bit RGB framebuffer setup, basic customizable desktop, polled PS/2 keyboard, and panic/halt path. Build and runtime status must be established by CI or local tests; this document does not assert a passing run.
+- **Implemented boot path:** GRUB BIOS Multiboot2 entry, NASM transition to x86_64, freestanding C entry, early serial diagnostics, bounds-checked 32-bit RGB framebuffer setup, basic customizable desktop, polled PS/2 keyboard and mouse, and panic/halt path. Build and runtime status must be established by CI or local tests; this document does not assert a passing run.
 - **Present but not integrated:** polled COM1 driver and serial shell command/input source; generic static network-device interface and registry. The current Makefile/kernel entry do not wire these components into the booted system.
-- **Desktop prototype limits:** four volatile color themes and title editing only; no mouse, saved preferences, windows, applications, or accelerated graphics. The interface requires a supported Multiboot2 framebuffer and PS/2 keyboard.
+- **Desktop prototype limits:** four volatile color themes, title editing, mouse pointer and clicks only; no saved preferences, windows, applications, or accelerated graphics. The interface requires a supported Multiboot2 framebuffer and PS/2-compatible input.
 - **Not implemented:** PCI discovery, physical/virtual memory managers, IDT/interrupt framework, NIC drivers, network protocols, storage/filesystems, processes/user mode, executable loader, and UEFI.
 
 ## Prioritized milestones
@@ -44,7 +44,7 @@ This roadmap separates source code from integrated and verified behavior. A feat
 - Block storage, filesystem, and VFS.
 - User-mode process and syscall foundations.
 - Decide a native executable format before implementing a loader. Windows PE `.exe` compatibility requires substantial PE loading, user-mode, ABI, and library compatibility and is not a near-term promise.
-- Expand the framebuffer/keyboard desktop only after stable device and application interfaces; persistent settings require storage and a filesystem.
+- Expand the framebuffer/keyboard/mouse desktop only after stable device and application interfaces; persistent settings require storage and a filesystem.
 - UEFI and broader hardware support as separately validated boot/platform targets.
 
 ## Release criteria

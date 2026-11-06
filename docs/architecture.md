@@ -2,13 +2,13 @@
 
 ## Current boot milestone
 
-GRUB's Multiboot2 BIOS loader loads the ELF64 kernel, requests an 800x600x32 framebuffer, and transfers control to `_start` in 32-bit protected mode. NASM bootstrap code checks the Multiboot2 magic, creates temporary identity-mapped page tables for the first 4 GiB using 2 MiB pages, enables PAE and long mode, loads a minimal GDT, sets a kernel stack, and calls the freestanding C entry. The C kernel bounds-checks the Multiboot2 information and RGB framebuffer tag, initializes COM1, draws a full-screen desktop, and polls the PS/2 keyboard for theme and title changes.
+GRUB's Multiboot2 BIOS loader loads the ELF64 kernel, requests an 800x600x32 framebuffer, and transfers control to `_start` in 32-bit protected mode. NASM bootstrap code checks the Multiboot2 magic, creates temporary identity-mapped page tables for the first 4 GiB using 2 MiB pages, enables PAE and long mode, loads a minimal GDT, sets a kernel stack, and calls the freestanding C entry. The C kernel bounds-checks the Multiboot2 information and RGB framebuffer tag, initializes COM1, draws a full-screen desktop, and polls PS/2 keyboard and mouse input.
 
-The desktop accepts 32-bit RGB framebuffers from 640x480 through 1920x1080 and provides four in-memory color themes plus an editable title. The keyboard path uses polling and does not enable interrupts. Settings are not persisted. This remains a minimal boot demonstration: it does not parse the Multiboot2 memory map, implement interrupts, memory allocation, storage, applications, a window manager, or UEFI boot.
+The desktop accepts 32-bit RGB framebuffers from 640x480 through 1920x1080 and provides four in-memory color themes plus an editable title. Keyboard and mouse input use polling and do not enable interrupts. If PS/2 mouse initialization fails, keyboard controls remain available. Settings are not persisted. This remains a minimal boot demonstration: it does not parse the Multiboot2 memory map, implement interrupts, memory allocation, storage, applications, a window manager, or UEFI boot.
 
 ## Intended subsystem boundaries
 
-The planned kernel is initially monolithic, with separate CPU, interrupt, memory, scheduler, driver, filesystem, syscall, and shell components. Drivers will provide kernel-facing device interfaces; VFS will decouple filesystem clients from MyFS; user interfaces will use explicit kernel APIs. The framebuffer and polled keyboard are initial low-level pieces only; these broader interfaces are not yet implemented.
+The planned kernel is initially monolithic, with separate CPU, interrupt, memory, scheduler, driver, filesystem, syscall, and shell components. Drivers will provide kernel-facing device interfaces; VFS will decouple filesystem clients from MyFS; user interfaces will use explicit kernel APIs. The framebuffer and polled PS/2 input are initial low-level pieces only; these broader interfaces are not yet implemented.
 
 ## Build and validation
 
