@@ -1,58 +1,51 @@
 # MyOS development roadmap
 
-This roadmap describes the current `copilot/myos-development` branch. “Implemented in source” means code exists; it does **not** mean it is integrated, built, or runtime-verified. Only mark an item verified after recording successful build/test evidence.
+This roadmap separates source code from integrated and verified behavior. A feature is considered verified only after the relevant build and runtime tests pass and evidence is recorded.
 
-## Current branch status
+## Current milestone
 
-- **Boot baseline:** GRUB Multiboot2 BIOS entry, NASM transition to long mode, freestanding kernel entry, serial/VGA boot messages, panic path. Existing baseline; verify against current branch with CI.
-- **Serial shell pieces (not integrated):** COM1 polled UART driver, bounded serial shell input loop, basic command handlers (`help`, `clear`, `echo`, `version`, `systeminfo`, `halt`). The current `kernel/main.c` still runs the original halt path, and the Makefile does not compile these shell/driver files. Do not treat the shell as usable until integrated and tested.
-- **Network device API/registry (not integrated, no NIC support):** `drivers/net/netdev.h` and `netdev.c` define static registration and callbacks for up to eight Ethernet devices. No PCI discovery, NIC drivers, protocol stack, or network management commands exist. The Makefile currently does not compile the registry.
-- **Verification:** No successful current-branch build, ISO generation, or QEMU boot result is recorded in this roadmap.
+- **Implemented boot path:** GRUB BIOS Multiboot2 entry, NASM transition to x86_64, freestanding C entry, early serial/VGA diagnostics, panic/halt path. Current build/boot status must be established by CI; this document does not assert a passing run.
+- **Present but not integrated:** polled COM1 driver and serial shell command/input source; generic static network-device interface and registry. The current Makefile/kernel entry do not wire these components into the booted system.
+- **Not implemented:** PCI discovery, physical/virtual memory managers, IDT/interrupt framework, NIC drivers, network protocols, storage/filesystems, processes/user mode, executable loader, graphics, and UEFI.
 
-## Near-term milestones
+## Prioritized milestones
 
-### 1. Restore and verify the boot baseline
+### 1. Establish a reproducible baseline
 
-- Run `make clean`, `make kernel`, `make check`, and `make iso` on the development branch.
-- Fix all build failures and preserve the BIOS Multiboot2 validation.
-- Run a bounded QEMU serial boot smoke test and confirm expected boot messages.
-- Record CI results; do not infer passing status from source alone.
+- Run `make clean`, `make kernel`, `make check`, and `make iso` in CI.
+- Run a bounded QEMU boot smoke test and retain serial logs/artifacts.
+- Fix build/boot regressions before adding dependent subsystems.
 
-### 2. Integrate and verify the serial shell
+### 2. Integrate and test the serial shell
 
-- Add the serial driver and shell/command sources to Makefile compilation and include paths.
-- Initialize COM1 and launch `shell_run()` from the validated kernel entry.
-- Keep interrupts disabled and shell input polled until a valid interrupt/exception path exists.
-- Extend CI to confirm the shell-ready message and prompt; test commands interactively in QEMU (`help`, `echo`, `clear`, unknown command, backspace, maximum line length, `halt`).
-- Document that this is a kernel-context COM1 shell, not a user process or keyboard/GUI shell.
+- Wire serial and shell sources into the build and kernel entry.
+- Exercise prompt, built-in commands, unknown command, backspace, line overflow, and halt in QEMU.
+- Keep the interface explicitly a polled kernel-context COM1 shell; keyboard input and user processes are separate future work.
 
-### 3. Establish safe hardware foundations
+### 3. Add safe platform foundations
 
-- Parse and validate Multiboot2 information, including memory-map bounds.
-- Add CPU exception handling and an IDT before enabling interrupts.
-- Implement PCI configuration-space discovery and a bounded device inventory.
-- Design safe MMIO mapping and DMA buffer allocation/lifetime rules before writing bus-mastering drivers.
-- Add tests or QEMU diagnostics for invalid device data and unsupported hardware.
+- Parse and bounds-check Multiboot2 boot information and memory map.
+- Add IDT and exception diagnostics; keep interrupts disabled until full setup is valid.
+- Add PCI enumeration and document configuration-space access.
+- Define memory allocation, MMIO mapping, DMA ownership, and teardown rules before bus-mastering drivers.
 
-### 4. Build networking incrementally
+### 4. Build networking in tested increments
 
-- Wire `netdev.c` into the build and add tests for registration limits, invalid callbacks/MTU, start/stop, and frame-length bounds.
-- Choose an initial QEMU NIC model and implement one driver only after PCI, MMIO/DMA, and memory-management prerequisites are met. Document the exact QEMU device configuration.
-- Validate link state and frame transmit/receive with a QEMU-only test harness; do not claim physical NIC compatibility.
-- Add Ethernet framing and then a small, testable network layer (ARP and IPv4/ICMP before UDP/TCP or DHCP). Define packet-buffer ownership and bounds checks.
-- Add a text adapter interface inspired by Windows Network Connections: list adapters, inspect link/MAC/MTU/driver, and enable/disable an adapter. Keep it explicitly informational/control-only; no GUI exists yet.
-- Add additional NIC drivers one at a time behind the common `netdev_ops` interface, each with documented supported IDs, limitations, and tests.
+- Integrate/test the generic network-device registry and cover invalid operations, registration bounds, start/stop, and frame limits.
+- Implement one documented QEMU NIC only after PCI and memory/DMA foundations; test link and packet I/O in QEMU.
+- Add bounded Ethernet and protocol layers (begin with ARP and IPv4/ICMP) with explicit packet-buffer ownership.
+- Add text adapter-management commands only after devices exist. Add more NIC drivers one at a time with supported IDs and tests.
+- Physical NIC support, TCP/IP completeness, DHCP, and a graphical settings UI are not implied.
 
-## Later milestones
+### 5. Add OS services
 
-1. Physical/virtual memory managers and a kernel heap after memory-map parsing.
-2. Timer and scheduler after exception/interrupt/controller support.
-3. Block storage, filesystem, and VFS after stable device and memory APIs.
-4. User mode and system calls after paging, exceptions, and process foundations.
-5. Keyboard input and reusable graphics; only then consider a graphical desktop/settings UI.
-6. Broader hardware support, security review, regression tests, performance work, and release process.
-7. UEFI boot as a separately tested boot path; BIOS-only support remains the current target.
+- Memory manager and heap, then timer/scheduler.
+- Block storage, filesystem, and VFS.
+- User-mode process and syscall foundations.
+- Decide a native executable format before implementing a loader. Windows PE `.exe` compatibility requires substantial PE loading, user-mode, ABI, and library compatibility and is not a near-term promise.
+- Keyboard, graphics, and a desktop only after stable device and application interfaces.
+- UEFI and broader hardware support as separately validated boot/platform targets.
 
-## Known limitations
+## Release criteria
 
-The bootstrap identity-maps only the first GiB and uses a minimal GDT. Multiboot2 data is not yet parsed. There is no verified IDT/interrupt framework, memory manager, PCI subsystem, network driver, network stack, filesystem, process model, syscall interface, keyboard driver, or graphical UI. No physical-hardware support or release-ready ISO is claimed.
+A release candidate requires clean reproducible builds, documented tested QEMU configurations, boot and subsystem regression tests, no generated artifacts in Git, a review of safety boundaries, and documentation that does not overstate physical-hardware or compatibility support.
