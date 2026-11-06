@@ -1,0 +1,38 @@
+name: Feature request
+ description: Propose a focused, testable improvement to MyOS.
+ title: "feature: "
+ labels: [enhancement]
+ body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or user need
+      description: What limitation should be addressed, and who is affected?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe a bounded approach and alternatives considered.
+    validations:
+      required: true
+  - type: textarea
+    id: prerequisites
+    attributes:
+      label: Prerequisites and dependencies
+      description: Identify required kernel foundations, tools, libraries, or headers. Explain if new host packages are needed.
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Acceptance criteria and tests
+      description: State observable success criteria, exact commands, test data, and QEMU/device configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Risks and limitations
+      description: Note safety, compatibility, scope, and follow-up considerations.
