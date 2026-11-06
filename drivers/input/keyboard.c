@@ -45,11 +45,14 @@ static uint8_t translate_scancode(uint8_t code) {
 }
 
 bool keyboard_poll(uint8_t *key) {
-    if (key == 0 || (inb(KEYBOARD_STATUS_PORT) & 0x01U) == 0U) {
+    if (key == 0) {
         return false;
     }
 
     uint8_t status = inb(KEYBOARD_STATUS_PORT);
+    if ((status & 0x01U) == 0U) {
+        return false;
+    }
     uint8_t code = inb(KEYBOARD_DATA_PORT);
     if ((status & 0x20U) != 0U || code == 0xE0U || code == 0xE1U) {
         return false;

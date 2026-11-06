@@ -71,6 +71,8 @@ bool framebuffer_initialize(uint32_t boot_info_address, framebuffer_t *framebuff
     }
 
     uint32_t offset = 8U;
+    bool found_framebuffer = false;
+    framebuffer_t parsed_framebuffer;
     while (offset <= total_size - 8U) {
         const uint8_t *tag = info + offset;
         uint32_t type = read_u32(tag);
@@ -79,10 +81,20 @@ bool framebuffer_initialize(uint32_t boot_info_address, framebuffer_t *framebuff
             return false;
         }
         if (type == 0U) {
-            return size == 8U ? false : false;
+            if (size != 8U) {
+                return false;
+            }
+            if (found_framebuffer) {
+                *framebuffer = parsed_framebuffer;
+            }
+            return found_framebuffer;
         }
         if (type == 8U) {
-            return parse_framebuffer_tag(tag, size, framebuffer);
+            if (found_framebuffer ||
+                !parse_framebuffer_tag(tag, size, &parsed_framebuffer)) {
+                return false;
+            }
+            found_framebuffer = true;
         }
 
         uint32_t aligned_size = (size + 7U) & ~7U;

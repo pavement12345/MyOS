@@ -16,7 +16,8 @@ CFLAGS := -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding \
 LDFLAGS := -m64 -nostdlib -static -no-pie -Wl,-T,linker.ld \
            -Wl,--build-id=none -Wl,-z,max-page-size=0x1000
 
-C_SOURCES := kernel/main.c kernel/panic.c
+C_SOURCES := kernel/main.c kernel/panic.c kernel/framebuffer.c kernel/desktop.c \
+             drivers/input/keyboard.c
 ASM_SOURCES := boot/boot.asm
 C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
 ASM_OBJECTS := $(patsubst %.asm,$(OBJ)/%.o,$(ASM_SOURCES))

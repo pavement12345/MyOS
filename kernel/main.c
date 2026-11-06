@@ -1,4 +1,6 @@
 #include "kernel.h"
+#include "desktop.h"
+#include "framebuffer.h"
 
 static inline void outb(uint16_t port, uint8_t value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -29,19 +31,17 @@ void serial_write(const char *text) {
     }
 }
 
-static void vga_write(const char *text) {
-    volatile uint16_t *video = (volatile uint16_t *)0xB8000;
-    for (uint32_t i = 0; text[i] && i < 80U * 25U; ++i)
-        video[i] = (uint16_t)(0x0FU << 8) | (uint8_t)text[i];
-}
-
 _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
-    (void)boot_info_address;
     serial_initialize();
     serial_write("MyOS: entered x86_64 kernel\n");
     if (boot_magic != MYOS_MULTIBOOT2_BOOT_MAGIC) panic("invalid Multiboot2 handoff magic");
-    vga_write("MyOS kernel booted - COM1 serial active");
     serial_write("MyOS: Multiboot2 handoff validated\n");
-    serial_write("MyOS: boot milestone only; other OS services are not implemented\n");
-    for (;;) __asm__ volatile ("cli; hlt");
+
+    framebuffer_t framebuffer;
+    if (!framebuffer_initialize(boot_info_address, &framebuffer)) {
+        panic("no supported Multiboot2 RGB framebuffer (need 640x480 to 1920x1080, 32 bpp)");
+    }
+    serial_write("MyOS: framebuffer initialized\n");
+    serial_write("MyOS: desktop ready; press T to change theme or E to edit title\n");
+    desktop_run(&framebuffer);
 }
