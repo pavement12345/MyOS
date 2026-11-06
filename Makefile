@@ -12,7 +12,7 @@ QEMU = qemu-system-x86_64
 
 CFLAGS := -std=gnu11 -O2 -Wall -Wextra -Werror -ffreestanding \
           -fno-stack-protector -fno-pic -fno-pie -m64 -mno-red-zone \
-          -mno-mmx -mno-sse -mno-sse2 -mcmodel=small -Ikernel
+          -mno-mmx -mno-sse -mno-sse2 -mcmodel=small -Ikernel -Idrivers/input
 LDFLAGS := -m64 -nostdlib -static -no-pie -Wl,-T,linker.ld \
            -Wl,--build-id=none -Wl,-z,max-page-size=0x1000
 
