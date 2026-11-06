@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "desktop.h"
 #include "framebuffer.h"
+#include "interrupts.h"
 #include "mouse.h"
 #include "physical.h"
 
@@ -38,6 +39,10 @@ _Noreturn void kernel_main(uint32_t boot_magic, uint32_t boot_info_address) {
     serial_write("MyOS: entered x86_64 kernel\n");
     if (boot_magic != MYOS_MULTIBOOT2_BOOT_MAGIC) panic("invalid Multiboot2 handoff magic");
     serial_write("MyOS: Multiboot2 handoff validated\n");
+    if (!interrupts_initialize()) {
+        panic("IDT exception self-test failed");
+    }
+    serial_write("MyOS: IDT loaded; exception path self-test passed\n");
 
     framebuffer_t framebuffer;
     if (!framebuffer_initialize(boot_info_address, &framebuffer)) {

@@ -17,8 +17,9 @@ LDFLAGS := -m64 -nostdlib -static -no-pie -Wl,-T,linker.ld \
            -Wl,--build-id=none -Wl,-z,max-page-size=0x1000
 
 C_SOURCES := kernel/main.c kernel/panic.c kernel/framebuffer.c kernel/desktop.c \
-             drivers/input/keyboard.c drivers/input/mouse.c memory/physical.c
-ASM_SOURCES := boot/boot.asm
+             kernel/interrupts.c drivers/input/keyboard.c drivers/input/mouse.c \
+             memory/physical.c
+ASM_SOURCES := boot/boot.asm boot/interrupts.asm
 C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
 ASM_OBJECTS := $(patsubst %.asm,$(OBJ)/%.o,$(ASM_SOURCES))
 OBJECTS := $(ASM_OBJECTS) $(C_OBJECTS)
