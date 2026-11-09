@@ -1,21 +1,23 @@
 # MyOS development roadmap
 
-This roadmap separates code present in source from behavior integrated and tested in the running kernel.
+This roadmap distinguishes code in the repository from integrated and verified behavior. Do not claim a capability until its implementation and relevant tests have been exercised.
 
-## Current milestone
+## Current state
 
-- **Boot/UI/memory/filesystem foundations:** see [architecture](architecture.md) and [kernel notes](kernel.md); build and runtime status must be established by CI or local tests.
-- **Implemented networking foundations:** bounded PCI discovery and QEMU e1000 controller reset/MAC/link inspection exist. The network-device registry is now included in the kernel build and has host-side mock-driver tests.
-- **Not implemented:** e1000 DMA rings or packet I/O, network protocol stack (Ethernet/ARP/IP/TCP/UDP/DNS/DHCP), Internet access, firewall/policy services, user-mode networking tools, or physical NIC support.
+- **Kernel/UI/memory/VFS:** early boot and framebuffer desktop with polled input, exception-only IDT, memory foundations, and volatile RAM filesystem. See [architecture](architecture.md) and [kernel notes](kernel.md); builds still need verification on the branch.
+- **Networking foundations:** registry API with static-lifetime device contract, separate started/carrier state, bounds checks on frames and callback-reported receive lengths; host mock-driver tests are available. Pure parser handles Ethernet, ARP Ethernet/IPv4, and IPv4 headers with truncation/malformed checks.
+- **e1000 status:** PCI discovery and controller reset/MAC/link inspection only. No DMA rings, frame transmit/receive, or physical NIC support.
+- **Not implemented:** live packet path, IPv4/ARP stack integration, TCP/UDP, DHCP/DNS, Internet connectivity, firewall/policy services, or user-facing network tools.
 
-## Networking milestones
+## Networking steps
 
-1. Run `make test-network`; test registration validation/capacity, device lifecycle, transmit bounds, and receive callback length checks.
-2. Implement an e1000 packet backend only after defining DMA allocation, cache coherency, descriptor ownership, and teardown. Validate in an isolated QEMU user-mode network with a private test service.
-3. Implement bounded protocol modules and parser tests for malformed/truncated frames; proceed from Ethernet/ARP and IPv4/ICMP to UDP/TCP, then DHCP/DNS.
-4. Add a deny-by-default interface policy and auditable, explicit configuration. Limit active exercises to authorized labs and require user-selected targets.
-5. Do not claim general Internet access until end-to-end DNS and transport tests pass against controlled services. Do not claim physical hardware support without hardware-specific validation.
+1. Verify `make test-network` and normal kernel build in CI.
+2. Specify and test DMA allocation, mapping/cache behavior, descriptor ownership, and teardown before enabling e1000 bus mastering.
+3. Add QEMU-only e1000 TX/RX tests using an isolated user-mode network and a private local test service.
+4. Integrate bounded Ethernet/ARP/IPv4 parsing with explicit packet-buffer ownership; expand synthetic tests for options, fragments, invalid lengths, and protocol boundaries.
+5. Add transport and name-resolution components only after prior layers are tested. Validate DHCP/DNS against controlled QEMU services before claiming Internet access.
+6. Add deny-by-default configuration, explicit user review, and auditable network status. Restrict active lab exercises to authorized targets.
 
-## Existing limitations
+## Constraints
 
-Maskable interrupts remain disabled. The kernel has no process isolation, user mode, persistent storage, memory protection, or tested DMA API. The e1000 initialization code does not transmit or receive frames. This project is not a production-ready defensive appliance and does not provide active scanning or exploit automation.
+Maskable interrupts remain disabled. There is no tested DMA API, process isolation, user mode, persistent storage, memory protection, or production-ready security boundary. Host-side tests only exercise pure functions and mocks; they do not prove kernel runtime or hardware behavior.
